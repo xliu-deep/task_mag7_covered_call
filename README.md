@@ -18,6 +18,16 @@ The project focuses on monthly covered calls from 2021 to 2025, comparing:
 - Net covered-call overlay contribution
 - Delta optimization by stock
 
+## Motivation
+
+This project starts from personal interest in the covered call strategy and a practical question:
+
+- Can covered calls generate a stable cash flow on top of long-term Mag7 holdings?
+- Is that cash flow meaningful after assignment costs, not just gross premium?
+- What parameter set (especially target delta) is most effective for each stock?
+
+In short, the research goal is to test whether "earning cash flow via CC" is truly feasible in a full market cycle, and to identify the best parameters rather than relying on a one-size-fits-all rule.
+
 ## Project Structure
 
 Core scripts:
@@ -49,19 +59,35 @@ The total strategy return is:
 
 `Total Return = Buy & Hold Return + Net CC Overlay`
 
-## Requirements
+## Backtest Results (2021-2025)
 
-Python 3.10+ recommended.
+### Main conclusion
 
-Install common dependencies:
+Yes, generating CC cash flow is feasible, but effectiveness is stock-dependent and parameter-dependent.
 
-```bash
-pip install numpy pandas scipy requests yfinance
-```
+- At optimized delta, all 7 stocks show positive net CC overlay in this backtest window.
+- CC works best in flat/bear or mild-bull regimes; strong rallies can hurt due to assignment cost.
+- "Best delta" is not universal and should be calibrated per stock.
 
-If you run scripts that rely on ThetaData API, ensure ThetaData local gateway is available at:
+### Best parameter and outcome by stock
 
-`http://127.0.0.1:25503`
+| Stock | Optimal Delta | Net CC Overlay | Combined Return (B&H + CC) |
+|-------|---------------|----------------|------------------------------|
+| AAPL  | 0.08          | +12.0%         | +97.3%                       |
+| MSFT  | 0.18          | +13.6%         | +118.0%                      |
+| GOOGL | 0.10          | +23.5%         | +134.3%                      |
+| AMZN  | 0.35          | +37.7%         | +71.7%                       |
+| NVDA  | 0.18          | +119.1%        | +1056.3%                     |
+| META  | 0.18          | +23.7%         | +139.6%                      |
+| TSLA  | 0.25          | +4.0%          | +58.4%                       |
+
+### Practical interpretation
+
+- Strong candidate: `AMZN` (high CC efficiency in this sample).
+- High income but high variance: `NVDA`.
+- Limited incremental benefit: `TSLA` (high premium but also high assignment drag).
+- More conservative profile: `AAPL` / `MSFT` with relatively lower target delta.
+
 
 ## Quick Start
 
