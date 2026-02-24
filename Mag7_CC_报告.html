@@ -1,0 +1,3016 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=1080">
+<title>科技七巨头 备兑看涨期权策略回测报告（真实数据）</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script><script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script><script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Inter:wght@400;600;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#1a1a2e;display:flex;flex-wrap:wrap;gap:50px;justify-content:center;padding:40px;font-family:"Inter","Noto Sans SC",sans-serif;}
+.num{font-family:"Times New Roman","STIX Two Math",Georgia,serif;font-style:normal;}
+.card{width:1080px;height:auto;background:linear-gradient(180deg,#f5f5f5 0%,#e8e8e8 100%);position:relative;box-shadow:0 10px 40px rgba(0,0,0,.15);padding:38px 46px 56px;color:#1a1a1a;overflow:visible;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#0055aa,#43A047);}
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid #ccc;}
+.brand{font-size:16px;font-weight:700;color:#0055aa;letter-spacing:1px;}
+.badge{background:#0055aa;color:#fff;padding:4px 13px;border-radius:4px;font-size:13px;font-weight:700;}
+.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:12px;border-top:1px solid #ddd;}
+.pn{font-size:15px;color:#999;font-family:"Times New Roman",Georgia,serif;font-weight:600;}
+.pf{font-size:13px;color:#aaa;}
+.stitle{font-size:50px;font-weight:900;margin-bottom:8px;color:#1a1a1a;line-height:1.15;}
+.sdesc{font-size:25px;color:#666;margin-bottom:12px;line-height:1.45;}
+.snum{display:inline-block;background:#0055aa;color:#fff;font-size:20px;font-weight:900;padding:5px 14px;border-radius:4px;margin-bottom:6px;}
+.h3{font-size:30px;font-weight:800;color:#1a1a1a;margin:16px 0 8px;border-left:4px solid #0055aa;padding-left:12px;}
+.h4{font-size:26px;font-weight:800;color:#0055aa;margin:12px 0 6px;}
+p,li{font-size:24px;color:#333;line-height:1.6;margin-bottom:7px;}
+ul,ol{margin-left:24px;margin-bottom:10px;}
+.bold{font-weight:700;} .hl{color:#0055aa;font-weight:700;}
+.positive{color:#137333;font-weight:700;} .negative{color:#c5221f;font-weight:700;}
+small,em,.note{font-size:19px;color:#888;}
+table{width:100%;border-collapse:collapse;font-size:21px;background:#fff;border-radius:6px;overflow:hidden;border:1px solid #ccc;margin:10px 0;}
+thead{background:#2a2a2a;}
+th{padding:10px 7px;text-align:center;font-weight:700;color:#fff;font-size:20px;white-space:nowrap;}
+td{padding:9px 7px;text-align:center;border-bottom:1px solid #e0e0e0;vertical-align:middle;font-size:21px;}
+td.left{text-align:left;font-weight:700;color:#0055aa;font-size:21px;}
+tr:nth-child(even){background:#fafafa;}
+table.sm{font-size:19px;} table.sm th{font-size:18px;padding:8px 5px;} table.sm td{font-size:19px;padding:7px 5px;} table.sm td.left{font-size:19px;}
+.hl-green{background:#e6f4ea;color:#137333;font-weight:700;padding:2px 6px;border-radius:3px;}
+.hl-red{background:#fce8e6;color:#c5221f;font-weight:700;padding:2px 6px;border-radius:3px;}
+.hl-blue{background:#e8eaf6;color:#0055aa;font-weight:700;padding:2px 6px;border-radius:3px;}
+.cbox{background:#fff;border:2px solid #0055aa;border-radius:6px;padding:18px;margin:12px 0;}
+.cbox-title{font-size:28px;font-weight:800;color:#0055aa;margin-bottom:8px;}
+.cbox-body{font-size:24px;color:#1a1a1a;line-height:1.6;}
+.qbox{background:#fff;border:1px solid #ddd;border-left:5px solid #0055aa;border-radius:6px;padding:16px 20px;margin:10px 0;}
+.qbox-title{font-size:26px;font-weight:800;color:#1a1a1a;margin-bottom:6px;}
+.qbox-body{font-size:23px;color:#444;line-height:1.5;} .qbox-body p{font-size:23px;color:#444;}
+.stat-row{display:flex;gap:14px;margin:16px 0;flex-wrap:wrap;}
+.stat-item{flex:1;min-width:170px;text-align:center;background:#fff;padding:18px 10px;border-radius:8px;border:1px solid #ddd;}
+.stat-number{font-size:46px;font-weight:700;font-family:"Times New Roman",Georgia,serif;color:#0055aa;}
+.stat-label{font-size:18px;color:#666;margin-top:5px;font-weight:600;}
+.tip-box{display:flex;gap:14px;margin:12px 0;flex-wrap:wrap;}
+.tip{flex:1;min-width:200px;background:#fff;border-radius:6px;padding:14px;border:1px solid #ddd;}
+.tip-h{font-size:24px;font-weight:700;color:#333;margin-bottom:4px;}
+.tip-p{font-size:22px;color:#555;line-height:1.4;}
+.chart-wrap{margin:16px 0;display:flex;justify-content:center;overflow:visible;}
+.vega-embed .vega-actions{display:none!important;}
+.formula-box{background:#fff;border:1px solid #ccc;border-radius:6px;padding:16px 24px;margin:12px 0;text-align:center;}
+.formula{font-family:"Times New Roman","STIX Two Math",Georgia,serif;font-size:28px;color:#1a1a1a;} .formula i{font-style:italic;}
+.card.big p,.card.big li{font-size:28px;}.card.big .h3{font-size:36px;}.card.big .h4{font-size:30px;}.card.big .sdesc{font-size:28px;}.card.big .stitle{font-size:54px;}
+.card.big table{font-size:25px;}.card.big th{font-size:23px;padding:11px 8px;}.card.big td{font-size:25px;padding:10px 8px;}.card.big td.left{font-size:25px;}
+.card.big table.sm{font-size:23px;}.card.big table.sm th{font-size:21px;padding:9px 6px;}.card.big table.sm td{font-size:23px;padding:8px 6px;}.card.big table.sm td.left{font-size:23px;}
+.card.big .cbox-title{font-size:32px;}.card.big .cbox-body{font-size:28px;}.card.big .qbox-title{font-size:30px;}.card.big .qbox-body,.card.big .qbox-body p{font-size:26px;}
+.card.big .tip-h{font-size:28px;}.card.big .tip-p{font-size:26px;} .card.big small,.card.big em,.card.big .note{font-size:22px;}
+.card.compact table.sm{font-size:17px;}.card.compact table.sm th{font-size:16px;padding:5px 3px;}.card.compact table.sm td{font-size:17px;padding:5px 3px;}.card.compact table.sm td.left{font-size:17px;}
+.card.compact .h4{font-size:22px;margin:8px 0 4px;}
+.card.big .chart-wrap{zoom:1.35;margin-bottom:10px;}
+.card.big.tbl-lg table.sm{font-size:28px;}.card.big.tbl-lg table.sm th{font-size:25px;padding:11px 7px;}.card.big.tbl-lg table.sm td{font-size:28px;padding:10px 7px;}.card.big.tbl-lg table.sm td.left{font-size:28px;}
+.card.big.tbl-lg .h4{font-size:34px;}
+</style></head><body>
+
+<div class="card">
+<div class="hdr"><div class="brand">COVERED CALL BACKTEST</div><div class="badge">真实数据报告</div></div>
+<div style="margin-top:0;font-size:130px;font-weight:900;line-height:1.1;color:#1a1a1a;">别只会买入持有！</div>
+<div style="margin-top:10px;font-size:130px;font-weight:800;line-height:1.1;color:#333;">5年实战回测：<span style="color:#0055aa;">科技七巨头</span>备兑看涨期权 <span style="color:#0055aa;">真实成交数据</span> 告诉你答案</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px;">
+<div class="stat-item" style="padding:26px 16px;"><div class="stat-number" style="font-size:64px;">$100K</div><div class="stat-label" style="font-size:26px;">每只股票初始资金</div></div>
+<div class="stat-item" style="padding:26px 16px;"><div class="stat-number" style="font-size:64px;">7</div><div class="stat-label" style="font-size:26px;">科技巨头股票</div></div>
+<div class="stat-item" style="padding:26px 16px;"><div class="stat-number" style="font-size:64px;">60</div><div class="stat-label" style="font-size:26px;">回测月数</div></div>
+<div class="stat-item" style="padding:26px 16px;"><div class="stat-number" style="font-size:64px;">4 / 7</div><div class="stat-label" style="font-size:26px;">正收益（Δ=0.20）</div></div>
+</div>
+<p style="margin-top:8px;font-size:38px;font-weight:800;color:#e65100;letter-spacing:1px;">⚠️ 本报告为 ThetaData API 真实 bid/ask 回测，非 Black-Scholes 模型估计</p>
+<div class="card-footer"><div class="pf">数据来源：ThetaData API v3 真实期权报价 · 仅供研究 · 2026年2月</div><div class="pn">01</div></div>
+</div>
+
+
+<div class="card big">
+<div class="hdr"><div class="brand">BACKTEST PROCESS</div><div class="badge">回测具体过程</div></div>
+<div class="snum">回测方法</div><div class="stitle">数据来源与回测流程</div>
+<div class="h3">数据来源：真实市场报价</div>
+<p>本回测<span class="bold">不使用 Black-Scholes 模型</span>估算期权价格，而是使用 <span class="hl">ThetaData API v3</span> 提供的真实历史 <span class="bold">bid/ask</span> 数据。</p>
+<ul>
+<li><span class="bold">期权价格：</span>每月选合约时取当日该合约的买卖盘中间价（mid）作为成交价</li>
+<li><span class="bold">规模：</span>7 只股票 × 约 60 个月 × 多档 Delta ≈ <span class="hl num">5,000+</span> 次 API 调用，单次完整回测约 49 分钟</li>
+<li><span class="bold">与以往报告的根本区别：</span>此前多为 BS 模型 + 历史 IV 的“理论权利金”；本报告为真实市场可成交价，更贴近实盘</li>
+</ul>
+<div class="h3">真实数据示例</div>
+<div class="cbox"><div class="cbox-body"><p>例如 AAPL 2021-01: 行权价=$135.0, Δ=0.27, bid=$1.35, ask=$1.42, 中价=$1.39</p></div></div>
+<div class="h3">拆股与可交易性</div>
+<p>• <span class="bold">GOOGL 20:1、AMZN 20:1：</span>拆股前股价 $3,000+，$100K 买不足 100 股，无法卖 1 张标准 Call，因此拆股前月份<span class="negative">不做 CC</span>（GOOGL 仅 41 个月有 CC）。</p>
+<p>• <span class="bold">NVDA 4:1 + 10:1、TSLA 3:1：</span>已按拆股调整股数与行权价，全期 60 个月均可回测。</p>
+<div class="h3">每月回测逻辑</div>
+<ol>
+<li>取当月首个交易日收盘价为“卖出期权日”股价</li>
+<li>按目标 Delta（如 0.20）在当月到期期权链中选最接近的 strike</li>
+<li>从 ThetaData 取该合约当日 bid/ask，以 (bid+ask)/2 作为权利金</li>
+<li>到期日：若收盘价 &gt; 行权价则记为被行权，行权成本 = (收盘价 − 行权价) × 100 × 合约张数</li>
+<li>净 CC = 权利金 − 行权成本，按初始 $100K 折算净 CC%</li>
+</ol>
+<div class="h3">Delta 网格</div>
+<p>对每只股票在 Delta 0.05～0.50 间做网格搜索，得到各 Delta 下的总权利金、总行权成本、净 CC 及净 CC%。<span class="bold">最优 Delta</span> = 净 CC% 最大的那一档。</p>
+<div class="card-footer"><div class="pf">ThetaData option_history 真实 bid/ask</div><div class="pn">02</div></div>
+</div>
+
+
+<div class="card big">
+<div class="hdr"><div class="brand">BACKGROUND</div><div class="badge">一 · 背景与动机</div></div>
+<div class="snum">一</div><div class="stitle">背景与动机</div>
+<div class="h3">为什么做这个研究？</div>
+<p>如果你长期持有 AAPL、MSFT、GOOGL、AMZN、NVDA、META、TSLA 这七只科技巨头（<span class="hl">Magnificent 7</span>），你可能会想：<span class="bold">除了坐等股价涨跌，有没有办法让手中的股票"生钱"？</span></p>
+<p>答案是：<span class="hl">备兑看涨期权（Covered Call，CC）</span>——但<span class="bold">真实数据显示 CC 并非对所有股票都有效</span>。</p>
+<div class="qbox" style="border-left-color:#0055aa;">
+<div class="qbox-title" style="font-size:24px;">什么是备兑看涨期权（Covered Call）？</div>
+<div class="qbox-body">
+<p>你持有股票并<span class="bold">卖出看涨期权</span>，收取权利金；若到期股价超过行权价则被行权，需按行权价卖出股票，放弃部分涨幅。<span class="positive">权利金</span>与<span class="negative">行权成本</span>之差即为净 CC。</p>
+</div></div>
+<div class="h3">研究设定</div>
+<p>本报告对 Mag 7 在 <span class="bold">2021年1月至2025年12月</span>（60个月）使用 <span class="hl">ThetaData 真实 bid/ask</span> 进行 CC 回测。</p>
+<ul>
+<li><span class="bold">初始资本：</span>每只股票 $100,000</li>
+<li><span class="bold">策略：</span>每月卖出约 1 个月到期、目标 Delta 的 OTM Call</li>
+<li><span class="bold">行权成本：</span>(收盘价 − 行权价) × 100 × 合约数</li>
+</ul>
+<div class="h3">2021–2025 市场环境</div>
+<table>
+<thead><tr><th>年份</th><th>市场环境</th><th>描述</th></tr></thead>
+<tbody>
+<tr><td class="left num">2021</td><td><strong>强牛市</strong></td><td style="text-align:left;">后疫情复苏，Mag 7 普涨（NVDA +125%，GOOGL +68%）</td></tr>
+<tr><td class="left num">2022</td><td><strong>严重熊市</strong></td><td style="text-align:left;">加息，全面暴跌（TSLA −69%，META −64%）</td></tr>
+<tr><td class="left num">2023</td><td><strong>强牛市</strong></td><td style="text-align:left;">AI 驱动反弹（NVDA +246%，META +184%）</td></tr>
+<tr><td class="left num">2024</td><td><strong>温和/强牛</strong></td><td style="text-align:left;">分化加剧（NVDA +179%，MSFT +13%）</td></tr>
+<tr><td class="left num">2025</td><td><strong>平盘/混合</strong></td><td style="text-align:left;">多数回报温和</td></tr>
+</tbody></table>
+<div class="h3">核心问题</div>
+<div class="tip-box">
+<div class="tip"><div class="tip-h">问题一</div><div class="tip-p">纯买入持有 5 年每只赚多少？</div></div>
+<div class="tip"><div class="tip-h">问题二</div><div class="tip-p">叠加 CC 后净赚还是净亏？（真实 bid/ask）</div></div>
+<div class="tip"><div class="tip-h">问题三</div><div class="tip-p">哪些股票适合 CC，哪些反而毁价值？</div></div>
+</div>
+<div class="h4">Delta（Δ）</div>
+<p>Delta 衡量期权对股价的敏感度。Δ=0.20 约 20% 行权概率，机构常用。更高 Δ = 更多权利金 + 更频繁行权。</p>
+<div class="card-footer"><div class="pf">CC = 备兑看涨期权</div><div class="pn">03</div></div>
+</div>
+
+
+<div class="card big">
+<div class="hdr"><div class="brand">BUY & HOLD</div><div class="badge">二 · 买入持有收益</div></div>
+<div class="snum">二</div><div class="stitle">买入持有收益（真实价格）</div>
+<div class="h3">逐年股价收益率</div>
+<table><thead><tr><th>股票</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>5年总计</th></tr></thead>
+<tbody><tr><td class="left">AAPL</td><td><span class="positive">+38.1%</span></td><td><span class="hl-red">−28.2%</span></td><td><span class="positive">+54.8%</span></td><td><span class="positive">+35.6%</span></td><td><span class="positive">+12.0%</span></td><td><span class="hl-green"><strong>+115.8%</strong></span></td></tr>
+<tr><td class="left">MSFT</td><td><span class="positive">+55.8%</span></td><td><span class="hl-red">−27.7%</span></td><td><span class="positive">+58.3%</span></td><td><span class="positive">+14.5%</span></td><td><span class="positive">+16.4%</span></td><td><span class="hl-green"><strong>+131.5%</strong></span></td></tr>
+<tr><td class="left">GOOGL</td><td><span class="positive">+67.8%</span></td><td><span class="hl-red">−39.1%</span></td><td><span class="positive">+56.7%</span></td><td><span class="positive">+37.5%</span></td><td><span class="positive">+65.9%</span></td><td><span class="hl-green"><strong>+265.4%</strong></span></td></tr>
+<tr><td class="left">AMZN</td><td><span class="positive">+4.6%</span></td><td><span class="hl-red">−50.7%</span></td><td><span class="positive">+77.0%</span></td><td><span class="positive">+46.3%</span></td><td><span class="positive">+4.8%</span></td><td><span class="hl-green"><strong>+44.9%</strong></span></td></tr>
+<tr><td class="left">NVDA</td><td><span class="positive">+124.5%</span></td><td><span class="hl-red">−51.4%</span></td><td><span class="positive">+246.1%</span></td><td><span class="positive">+178.9%</span></td><td><span class="positive">+34.9%</span></td><td><span class="hl-green"><strong>+1326.2%</strong></span></td></tr>
+<tr><td class="left">META</td><td><span class="positive">+25.1%</span></td><td><span class="hl-red">−64.5%</span></td><td><span class="positive">+183.8%</span></td><td><span class="positive">+69.7%</span></td><td><span class="positive">+10.5%</span></td><td><span class="hl-green"><strong>+147.2%</strong></span></td></tr>
+<tr><td class="left">TSLA</td><td><span class="positive">+44.8%</span></td><td><span class="hl-red">−69.2%</span></td><td><span class="positive">+129.9%</span></td><td><span class="positive">+62.6%</span></td><td><span class="positive">+18.6%</span></td><td><span class="hl-green"><strong>+84.9%</strong></span></td></tr></tbody></table>
+<div class="h3">投资组合终值（初始各 $100K）</div>
+<table><thead><tr><th>股票</th><th>买入股数</th><th>买入价</th><th>期末价</th><th>终值</th><th>收益率</th></tr></thead>
+<tbody><tr><td class="left">AAPL</td><td class="num">700</td><td class="num">$125.86</td><td class="num">$2.89</td><td class="num"><span class="hl-green">$202K</span></td><td class="positive">+115.8%</td></tr>
+<tr><td class="left">MSFT</td><td class="num">400</td><td class="num">$208.88</td><td class="num">$5.25</td><td class="num"><span class="hl-green">$210K</span></td><td class="positive">+131.5%</td></tr>
+<tr><td class="left">GOOGL</td><td class="num">58</td><td class="num">$1713.19</td><td class="num">$62.71</td><td class="num"><span class="hl-green">$364K</span></td><td class="positive">+265.4%</td></tr>
+<tr><td class="left">AMZN</td><td class="num">31</td><td class="num">$3186.63</td><td class="num">$46.56</td><td class="num"><span class="hl-green">$144K</span></td><td class="positive">+44.9%</td></tr>
+<tr><td class="left">NVDA</td><td class="num">191</td><td class="num">$523.07</td><td class="num">$74.60</td><td class="num"><span class="hl-green">$1425K</span></td><td class="positive">+1326.2%</td></tr>
+<tr><td class="left">META</td><td class="num">374</td><td class="num">$267.07</td><td class="num">$6.60</td><td class="num"><span class="hl-green">$247K</span></td><td class="positive">+147.2%</td></tr>
+<tr><td class="left">TSLA</td><td class="num">137</td><td class="num">$729.77</td><td class="num">$13.49</td><td class="num"><span class="hl-green">$185K</span></td><td class="positive">+84.9%</td></tr></tbody></table>
+<p class="note"><em>注：价格已做拆股调整。GOOGL/AMZN 20:1；NVDA 4:1+10:1；TSLA 3:1</em></p>
+<div class="chart-wrap"><div id="chart1"></div></div>
+<div class="card-footer"><div class="pf">ThetaData 真实价格</div><div class="pn">04</div></div>
+</div>
+
+
+<div class="card big">
+<div class="hdr"><div class="brand">CC PREMIUM</div><div class="badge">三 · 权利金收入（真实 bid/ask）</div></div>
+<div class="snum">三</div><div class="stitle">CC 权利金收入（Delta = 0.20）</div>
+<div class="h3">年度权利金（$100K 初始）</div>
+<table class="sm"><thead><tr><th>股票</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>合计</th><th>月均</th></tr></thead>
+<tbody><tr><td class="left">AAPL</td><td>$7.2K<br><small>7.2%</small></td><td>$8.5K<br><small>8.5%</small></td><td>$7.9K<br><small>7.9%</small></td><td>$9.5K<br><small>9.5%</small></td><td>$11.1K<br><small>11.1%</small></td><td><span class="hl-green"><strong>$44K</strong></span></td><td><span class="hl-blue">$736</span></td></tr>
+<tr><td class="left">MSFT</td><td>$6.3K<br><small>6.3%</small></td><td>$7.8K<br><small>7.8%</small></td><td>$7.4K<br><small>7.4%</small></td><td>$8.8K<br><small>8.8%</small></td><td>$10.7K<br><small>10.7%</small></td><td><span class="hl-green"><strong>$41K</strong></span></td><td><span class="hl-blue">$681</span></td></tr>
+<tr><td class="left">GOOGL</td><td>—</td><td>$3.5K<br><small>3.5%</small></td><td>$10.4K<br><small>10.4%</small></td><td>$11.3K<br><small>11.3%</small></td><td>$18.1K<br><small>18.1%</small></td><td><span class="hl-green"><strong>$43K</strong></span></td><td><span class="hl-blue">$1054</span></td></tr>
+<tr><td class="left">AMZN</td><td>—</td><td>$3.4K<br><small>3.4%</small></td><td>$5.7K<br><small>5.7%</small></td><td>$8.8K<br><small>8.8%</small></td><td>$11.8K<br><small>11.8%</small></td><td><span class="hl-green"><strong>$30K</strong></span></td><td><span class="hl-blue">$706</span></td></tr>
+<tr><td class="left">NVDA</td><td>$11.8K<br><small>11.8%</small></td><td>$18.9K<br><small>18.9%</small></td><td>$27.8K<br><small>27.8%</small></td><td>$97.1K<br><small>97.1%</small></td><td>$127.8K<br><small>127.8%</small></td><td><span class="hl-green"><strong>$283K</strong></span></td><td><span class="hl-blue">$4723</span></td></tr>
+<tr><td class="left">META</td><td>—</td><td>$2.6K<br><small>2.6%</small></td><td>$6.2K<br><small>6.2%</small></td><td>$11.6K<br><small>11.6%</small></td><td>$17.3K<br><small>17.3%</small></td><td><span class="hl-green"><strong>$38K</strong></span></td><td><span class="hl-blue">$898</span></td></tr>
+<tr><td class="left">TSLA</td><td>$11.7K<br><small>11.7%</small></td><td>$14.9K<br><small>14.9%</small></td><td>$12.7K<br><small>12.7%</small></td><td>$13.0K<br><small>13.0%</small></td><td>$21.8K<br><small>21.8%</small></td><td><span class="hl-green"><strong>$74K</strong></span></td><td><span class="hl-blue">$1236</span></td></tr></tbody></table>
+<div class="cbox"><div class="cbox-title">说明</div><div class="cbox-body">权利金来自 ThetaData 历史 bid/ask 中价，非模型估计。GOOGL 仅 41 个月有 CC（拆股前无法 1 张合约）。</div></div>
+<div class="chart-wrap"><div id="chart5"></div></div>
+<div class="cbox"><div class="cbox-title">关键观察</div><div class="cbox-body">
+<p>1. IV 驱动权利金；TSLA、NVDA 权利金高但行权成本也高，<span class="negative">净 CC 可为负</span>。</p>
+<p>2. 权利金 ≠ 净收益，必须扣除行权成本。NVDA、GOOGL、TSLA 在真实数据下净 CC 为负。</p>
+</div></div>
+<div class="card-footer"><div class="pf">ThetaData 真实报价</div><div class="pn">05</div></div>
+</div>
+
+
+<div class="card big tbl-lg">
+<div class="hdr"><div class="brand">NET CC OVERLAY</div><div class="badge">四 · 净 CC 收益（真实数据）</div></div>
+<div class="snum">四</div><div class="stitle">净 CC = 权利金 − 行权成本（Δ=0.20）</div>
+
+<div class="h4">AAPL</div><table class="sm"><thead><tr><th>年份</th><th>权利金</th><th>行权成本</th><th>净CC</th><th>行权</th></tr></thead><tbody><tr><td>2021</td><td>$7,196</td><td>$5,671</td><td class="positive"><strong>+1,525</strong></td><td>3/12</td></tr>
+<tr><td>2022</td><td>$8,491</td><td>$1,645</td><td class="positive"><strong>+6,846</strong></td><td>1/12</td></tr>
+<tr><td>2023</td><td>$7,850</td><td>$4,354</td><td class="positive"><strong>+3,496</strong></td><td>3/12</td></tr>
+<tr><td>2024</td><td>$9,482</td><td>$8,692</td><td class="positive"><strong>+789</strong></td><td>3/12</td></tr>
+<tr><td>2025</td><td>$11,116</td><td>$14,467</td><td class="negative"><strong>-3,351</strong></td><td>3/12</td></tr>
+<tr style="background:#e8f5e9;"><td><strong>合计</strong></td><td><strong>$44,135</strong></td><td><strong>$34,829</strong></td><td class="positive"><strong>$+9,306</strong></td><td><strong>13/60</strong></td></tr></tbody></table>
+<div class="h4">MSFT</div><table class="sm"><thead><tr><th>年份</th><th>权利金</th><th>行权成本</th><th>净CC</th><th>行权</th></tr></thead><tbody><tr><td>2021</td><td>$6,258</td><td>$307</td><td class="positive"><strong>+5,951</strong></td><td>1/12</td></tr>
+<tr><td>2022</td><td>$7,764</td><td>$0</td><td class="positive"><strong>+7,764</strong></td><td>0/12</td></tr>
+<tr><td>2023</td><td>$7,364</td><td>$7,202</td><td class="positive"><strong>+162</strong></td><td>2/12</td></tr>
+<tr><td>2024</td><td>$8,790</td><td>$11,750</td><td class="negative"><strong>-2,960</strong></td><td>4/12</td></tr>
+<tr><td>2025</td><td>$10,698</td><td>$4,666</td><td class="positive"><strong>+6,032</strong></td><td>3/12</td></tr>
+<tr style="background:#e8f5e9;"><td><strong>合计</strong></td><td><strong>$40,874</strong></td><td><strong>$23,925</strong></td><td class="positive"><strong>$+16,949</strong></td><td><strong>10/60</strong></td></tr></tbody></table>
+<div class="h4">GOOGL</div><table class="sm"><thead><tr><th>年份</th><th>权利金</th><th>行权成本</th><th>净CC</th><th>行权</th></tr></thead><tbody><tr><td>2022</td><td>$3,482</td><td>$0</td><td class="positive"><strong>+3,482</strong></td><td>0/5</td></tr>
+<tr><td>2023</td><td>$10,378</td><td>$21,205</td><td class="negative"><strong>-10,827</strong></td><td>4/12</td></tr>
+<tr><td>2024</td><td>$11,286</td><td>$12,040</td><td class="negative"><strong>-754</strong></td><td>2/12</td></tr>
+<tr><td>2025</td><td>$18,062</td><td>$25,452</td><td class="negative"><strong>-7,390</strong></td><td>2/12</td></tr>
+<tr style="background:#e8f5e9;"><td><strong>合计</strong></td><td><strong>$43,208</strong></td><td><strong>$58,697</strong></td><td class="negative"><strong>$-15,489</strong></td><td><strong>8/41</strong></td></tr></tbody></table>
+<div class="card-footer"><div class="pf">净 CC 可为负：牛市行权成本常大于权利金</div><div class="pn">06</div></div></div>
+
+
+<div class="card big tbl-lg">
+<div class="hdr"><div class="brand">NET CC OVERLAY</div><div class="badge">四 · 净 CC（续）</div></div>
+
+<div class="h4">AMZN</div><table class="sm"><thead><tr><th>年份</th><th>权利金</th><th>行权成本</th><th>净CC</th><th>行权</th></tr></thead><tbody><tr><td>2022</td><td>$3,363</td><td>$0</td><td class="positive"><strong>+3,363</strong></td><td>0/6</td></tr>
+<tr><td>2023</td><td>$5,652</td><td>$6,708</td><td class="negative"><strong>-1,056</strong></td><td>3/12</td></tr>
+<tr><td>2024</td><td>$8,841</td><td>$6,360</td><td class="positive"><strong>+2,481</strong></td><td>3/12</td></tr>
+<tr><td>2025</td><td>$11,781</td><td>$3,972</td><td class="positive"><strong>+7,809</strong></td><td>2/12</td></tr>
+<tr style="background:#e8f5e9;"><td><strong>合计</strong></td><td><strong>$29,637</strong></td><td><strong>$17,040</strong></td><td class="positive"><strong>$+12,597</strong></td><td><strong>8/42</strong></td></tr></tbody></table>
+<div class="h4">NVDA</div><table class="sm"><thead><tr><th>年份</th><th>权利金</th><th>行权成本</th><th>净CC</th><th>行权</th></tr></thead><tbody><tr><td>2021</td><td>$11,762</td><td>$42,341</td><td class="negative"><strong>-30,579</strong></td><td>4/12</td></tr>
+<tr><td>2022</td><td>$18,886</td><td>$2,844</td><td class="positive"><strong>+16,042</strong></td><td>1/12</td></tr>
+<tr><td>2023</td><td>$27,786</td><td>$45,703</td><td class="negative"><strong>-17,917</strong></td><td>4/12</td></tr>
+<tr><td>2024</td><td>$97,100</td><td>$173,580</td><td class="negative"><strong>-76,480</strong></td><td>5/12</td></tr>
+<tr><td>2025</td><td>$127,832</td><td>$192,022</td><td class="negative"><strong>-64,190</strong></td><td>2/12</td></tr>
+<tr style="background:#e8f5e9;"><td><strong>合计</strong></td><td><strong>$283,366</strong></td><td><strong>$456,491</strong></td><td class="negative"><strong>$-173,126</strong></td><td><strong>16/60</strong></td></tr></tbody></table>
+<div class="h4">META</div><table class="sm"><thead><tr><th>年份</th><th>权利金</th><th>行权成本</th><th>净CC</th><th>行权</th></tr></thead><tbody><tr><td>2022</td><td>$2,620</td><td>$1,882</td><td class="positive"><strong>+739</strong></td><td>1/6</td></tr>
+<tr><td>2023</td><td>$6,180</td><td>$3,862</td><td class="positive"><strong>+2,318</strong></td><td>3/12</td></tr>
+<tr><td>2024</td><td>$11,600</td><td>$13,488</td><td class="negative"><strong>-1,889</strong></td><td>3/12</td></tr>
+<tr><td>2025</td><td>$17,310</td><td>$9,335</td><td class="positive"><strong>+7,975</strong></td><td>2/12</td></tr>
+<tr style="background:#e8f5e9;"><td><strong>合计</strong></td><td><strong>$37,710</strong></td><td><strong>$28,567</strong></td><td class="positive"><strong>$+9,143</strong></td><td><strong>9/42</strong></td></tr></tbody></table>
+<div class="h4">TSLA</div><table class="sm"><thead><tr><th>年份</th><th>权利金</th><th>行权成本</th><th>净CC</th><th>行权</th></tr></thead><tbody><tr><td>2021</td><td>$11,740</td><td>$3,897</td><td class="positive"><strong>+7,843</strong></td><td>3/12</td></tr>
+<tr><td>2022</td><td>$14,860</td><td>$0</td><td class="positive"><strong>+14,860</strong></td><td>0/12</td></tr>
+<tr><td>2023</td><td>$12,740</td><td>$24,116</td><td class="negative"><strong>-11,376</strong></td><td>5/12</td></tr>
+<tr><td>2024</td><td>$13,044</td><td>$31,692</td><td class="negative"><strong>-18,648</strong></td><td>4/12</td></tr>
+<tr><td>2025</td><td>$21,750</td><td>$43,724</td><td class="negative"><strong>-21,974</strong></td><td>5/12</td></tr>
+<tr style="background:#e8f5e9;"><td><strong>合计</strong></td><td><strong>$74,134</strong></td><td><strong>$103,429</strong></td><td class="negative"><strong>$-29,295</strong></td><td><strong>17/60</strong></td></tr></tbody></table>
+<div class="card-footer"><div class="pf">NVDA/GOOGL/TSLA 净 CC 为负</div><div class="pn">07</div></div></div>
+
+
+<div class="card big">
+<div class="hdr"><div class="brand">COMBINED RETURN</div><div class="badge">五 · 综合收益</div></div>
+<div class="snum">五</div><div class="stitle">综合收益总览（真实数据）</div>
+<div class="h3">净 CC 按年（占 $100K 比例）</div>
+<table><thead><tr><th>股票</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>合计</th></tr></thead>
+<tbody><tr><td class="left">AAPL</td><td class="positive">+1.5%</td><td class="positive">+6.8%</td><td class="positive">+3.5%</td><td class="positive">+0.8%</td><td class="negative">-3.4%</td><td><span class="hl-green"><strong>+9.3%</strong></span></td></tr>
+<tr><td class="left">MSFT</td><td class="positive">+6.0%</td><td class="positive">+7.8%</td><td class="positive">+0.2%</td><td class="negative">-3.0%</td><td class="positive">+6.0%</td><td><span class="hl-green"><strong>+16.9%</strong></span></td></tr>
+<tr><td class="left">GOOGL</td><td>—</td><td class="positive">+3.5%</td><td class="negative">-10.8%</td><td class="negative">-0.8%</td><td class="negative">-7.4%</td><td><span class="hl-red"><strong>-15.5%</strong></span></td></tr>
+<tr><td class="left">AMZN</td><td>—</td><td class="positive">+3.4%</td><td class="negative">-1.1%</td><td class="positive">+2.5%</td><td class="positive">+7.8%</td><td><span class="hl-green"><strong>+12.6%</strong></span></td></tr>
+<tr><td class="left">NVDA</td><td class="negative">-30.6%</td><td class="positive">+16.0%</td><td class="negative">-17.9%</td><td class="negative">-76.5%</td><td class="negative">-64.2%</td><td><span class="hl-red"><strong>-173.1%</strong></span></td></tr>
+<tr><td class="left">META</td><td>—</td><td class="positive">+0.7%</td><td class="positive">+2.3%</td><td class="negative">-1.9%</td><td class="positive">+8.0%</td><td><span class="hl-green"><strong>+9.1%</strong></span></td></tr>
+<tr><td class="left">TSLA</td><td class="positive">+7.8%</td><td class="positive">+14.9%</td><td class="negative">-11.4%</td><td class="negative">-18.6%</td><td class="negative">-22.0%</td><td><span class="hl-red"><strong>-29.3%</strong></span></td></tr></tbody></table>
+<div class="h3">综合收益：B&H + 最优 Delta 净 CC</div>
+<table><thead><tr><th>股票</th><th>B&H</th><th>CC净(Δ=0.20)</th><th>综合(最优Δ)</th><th>B&H终值</th><th>综合终值</th></tr></thead>
+<tbody><tr><td class="left">AAPL</td><td>+115.8%</td><td><span class="hl-green">+9.3%</span></td><td><span class="hl-green"><strong>+139.3%</strong></span></td><td>$202K</td><td><span class="hl-blue">$225K</span></td></tr>
+<tr><td class="left">MSFT</td><td>+131.5%</td><td><span class="hl-green">+16.9%</span></td><td><span class="hl-green"><strong>+189.2%</strong></span></td><td>$210K</td><td><span class="hl-blue">$268K</span></td></tr>
+<tr><td class="left">GOOGL</td><td>+265.4%</td><td><span class="hl-red">-15.5%</span></td><td><span class="hl-green"><strong>+261.0%</strong></span></td><td>$364K</td><td><span class="hl-blue">$359K</span></td></tr>
+<tr><td class="left">AMZN</td><td>+44.9%</td><td><span class="hl-green">+12.6%</span></td><td><span class="hl-green"><strong>+63.6%</strong></span></td><td>$144K</td><td><span class="hl-blue">$163K</span></td></tr>
+<tr><td class="left">NVDA</td><td>+1326.2%</td><td><span class="hl-red">-173.1%</span></td><td><span class="hl-green"><strong>+1301.2%</strong></span></td><td>$1425K</td><td><span class="hl-blue">$1400K</span></td></tr>
+<tr><td class="left">META</td><td>+147.2%</td><td><span class="hl-green">+9.1%</span></td><td><span class="hl-green"><strong>+158.9%</strong></span></td><td>$247K</td><td><span class="hl-blue">$259K</span></td></tr>
+<tr><td class="left">TSLA</td><td>+84.9%</td><td><span class="hl-red">-29.3%</span></td><td><span class="hl-green"><strong>+86.3%</strong></span></td><td>$185K</td><td><span class="hl-blue">$186K</span></td></tr></tbody></table>
+<div class="cbox"><div class="cbox-title">真实数据结论</div><div class="cbox-body">仅 4/7 在 Δ=0.20 下净 CC 为正；NVDA、GOOGL、TSLA 上 CC 侵蚀收益。最优 Delta 下 5/7 净正（TSLA 仅 +1.4%）。</div></div>
+<div class="card-footer"><div class="pf">综合 = B&H% + 最优 Delta 净 CC%</div><div class="pn">08</div></div>
+</div>
+
+
+<div class="card big">
+<div class="hdr"><div class="brand">COMBINED RETURN</div><div class="badge">五 · 收益可视化</div></div>
+
+<div class="chart-wrap"><div id="chart4"></div></div>
+<div class="chart-wrap"><div id="chart3"></div></div>
+<div class="cbox"><div class="cbox-title">Delta=0.20 洞察（真实数据）</div><div class="cbox-body">
+<p>• 强牛年：CC 常为<span class="negative">负</span>（行权成本 &gt; 权利金）</p>
+<p>• 熊市/平盘：CC 多为<span class="positive">正</span></p>
+<p>• NVDA/GOOGL/TSLA：整段周期净 CC 为负，CC 毁价值</p>
+</div></div>
+<div style="border-top:2px dashed #ccc;margin:20px 0;"></div>
+
+<div class="chart-wrap"><div id="chart6"></div></div>
+<div class="h3">行权次数（Δ=0.20）</div>
+<table><thead><tr><th>股票</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>合计</th></tr></thead>
+<tbody><tr><td class="left">AAPL</td><td>3/12</td><td>1/12</td><td>3/12</td><td>3/12</td><td>3/12</td><td><strong>13/60</strong></td></tr>
+<tr><td class="left">MSFT</td><td>1/12</td><td>0/12</td><td>2/12</td><td>4/12</td><td>3/12</td><td><strong>10/60</strong></td></tr>
+<tr><td class="left">GOOGL</td><td>—</td><td>0/5</td><td>4/12</td><td>2/12</td><td>2/12</td><td><strong>8/41</strong></td></tr>
+<tr><td class="left">AMZN</td><td>—</td><td>0/6</td><td>3/12</td><td>3/12</td><td>2/12</td><td><strong>8/42</strong></td></tr>
+<tr><td class="left">NVDA</td><td>4/12</td><td>1/12</td><td>4/12</td><td>5/12</td><td>2/12</td><td><strong>16/60</strong></td></tr>
+<tr><td class="left">META</td><td>—</td><td>1/6</td><td>3/12</td><td>3/12</td><td>2/12</td><td><strong>9/42</strong></td></tr>
+<tr><td class="left">TSLA</td><td>3/12</td><td>0/12</td><td>5/12</td><td>4/12</td><td>5/12</td><td><strong>17/60</strong></td></tr></tbody></table>
+
+<div class="card-footer"><div class="pf">牛市让利 · 熊市收益 · 部分个股 CC 不宜</div><div class="pn">09</div></div>
+</div>
+
+<div class="card big">
+<div class="hdr"><div class="brand">DELTA OPTIMIZATION</div><div class="badge">六 · Delta 优化</div></div>
+
+<div class="snum">六</div><div class="stitle">Delta 网格：净 CC%（真实数据）</div>
+<table class="sm"><thead><tr><th>Δ</th><th>AAPL</th><th>MSFT</th><th>GOOGL</th><th>AMZN</th><th>NVDA</th><th>META</th><th>TSLA</th></tr></thead><tbody><tr><td class="num bold">0.05</td><td class="">+4.2%</td><td class="">+8.2%</td><td class="hl">-4.4%</td><td class="">+5.3%</td><td class="hl">-25.0%</td><td class="">+7.8%</td><td class="hl">+1.4%</td></tr><tr><td class="num bold">0.1</td><td class="">+9.1%</td><td class="">+10.2%</td><td class="">-12.4%</td><td class="">+9.0%</td><td class="">-118.1%</td><td class="">+11.1%</td><td class="">-9.4%</td></tr><tr><td class="num bold">0.15</td><td class="">+7.8%</td><td class="">+16.8%</td><td class="">-13.3%</td><td class="">+12.0%</td><td class="">-144.5%</td><td class="hl">+11.7%</td><td class="">-17.0%</td></tr><tr><td class="num bold">0.2</td><td class="">+9.3%</td><td class="">+16.9%</td><td class="">-15.5%</td><td class="">+12.6%</td><td class="">-173.1%</td><td class="">+9.1%</td><td class="">-29.3%</td></tr><tr><td class="num bold">0.25</td><td class="">+10.2%</td><td class="">+19.4%</td><td class="">-18.8%</td><td class="">+16.6%</td><td class="">-234.0%</td><td class="">+11.6%</td><td class="">-41.2%</td></tr><tr><td class="num bold">0.3</td><td class="">+7.9%</td><td class="">+25.0%</td><td class="">-26.2%</td><td class="">+11.4%</td><td class="">-240.2%</td><td class="">+9.2%</td><td class="">-52.0%</td></tr><tr><td class="num bold">0.35</td><td class="">+13.3%</td><td class="">+33.6%</td><td class="">-27.3%</td><td class="">+17.0%</td><td class="">-329.9%</td><td class="">+9.2%</td><td class="">-58.8%</td></tr><tr><td class="num bold">0.4</td><td class="">+19.6%</td><td class="">+38.9%</td><td class="">-24.5%</td><td class="hl">+18.7%</td><td class="">-343.6%</td><td class="">+11.0%</td><td class="">-60.3%</td></tr><tr><td class="num bold">0.45</td><td class="hl">+23.5%</td><td class="">+47.3%</td><td class="">-28.8%</td><td class="">+18.7%</td><td class="">-366.2%</td><td class="">+10.2%</td><td class="">-59.1%</td></tr><tr><td class="num bold">0.5</td><td class="">+18.0%</td><td class="hl">+57.7%</td><td class="">-31.9%</td><td class="">+15.4%</td><td class="">-400.8%</td><td class="">+11.3%</td><td class="">-58.1%</td></tr></tbody></table>
+<p class="note"><em>粗体 = 该股票最优 Delta。GOOGL/NVDA/TSLA 全档位净 CC 为负或接近零。</em></p>
+<div class="chart-wrap"><div id="chart2"></div></div>
+<div style="border-top:2px dashed #ccc;margin:20px 0;"></div>
+
+<div class="h3">最优策略汇总</div>
+<table class="sm"><thead><tr><th>股票</th><th>最优Δ</th><th>均IV</th><th>B&H</th><th>CC净(最优)</th><th>综合</th><th>行权</th><th>权利金</th><th>行权成本</th></tr></thead>
+<tbody><tr><td class="left">AAPL</td><td class="num bold">0.45</td><td>25%</td><td>+115.8%</td><td class="positive">+23.5%</td><td class="positive"><strong>+139.3%</strong></td><td>13/60</td><td>$44K</td><td>$35K</td></tr>
+<tr><td class="left">MSFT</td><td class="num bold">0.5</td><td>22%</td><td>+131.5%</td><td class="positive">+57.7%</td><td class="positive"><strong>+189.2%</strong></td><td>10/60</td><td>$41K</td><td>$24K</td></tr>
+<tr><td class="left">GOOGL</td><td class="num bold">0.05</td><td>27%</td><td>+265.4%</td><td class="negative">-4.4%</td><td class="positive"><strong>+261.0%</strong></td><td>8/41</td><td>$43K</td><td>$59K</td></tr>
+<tr><td class="left">AMZN</td><td class="num bold">0.4</td><td>33%</td><td>+44.9%</td><td class="positive">+18.7%</td><td class="positive"><strong>+63.6%</strong></td><td>8/42</td><td>$30K</td><td>$17K</td></tr>
+<tr><td class="left">NVDA</td><td class="num bold">0.05</td><td>45%</td><td>+1326.2%</td><td class="negative">-25.0%</td><td class="positive"><strong>+1301.2%</strong></td><td>16/60</td><td>$283K</td><td>$456K</td></tr>
+<tr><td class="left">META</td><td class="num bold">0.15</td><td>33%</td><td>+147.2%</td><td class="positive">+11.7%</td><td class="positive"><strong>+158.9%</strong></td><td>9/42</td><td>$38K</td><td>$29K</td></tr>
+<tr><td class="left">TSLA</td><td class="num bold">0.05</td><td>57%</td><td>+84.9%</td><td class="positive">+1.4%</td><td class="positive"><strong>+86.3%</strong></td><td>17/60</td><td>$74K</td><td>$103K</td></tr></tbody></table>
+<div class="cbox"><div class="cbox-title">结论</div><div class="cbox-body">AAPL、MSFT、AMZN、META 在真实数据下 CC 净正；GOOGL、NVDA、TSLA 最优 Delta 下仍净负或接近零，<span class="negative">不推荐对这三只做 CC</span>。</div></div>
+
+<div class="card-footer"><div class="pf">网格：0.05～0.50</div><div class="pn">10</div></div>
+</div>
+
+<div class="card big">
+<div class="hdr"><div class="brand">IV-DELTA ANALYSIS</div><div class="badge">七 · 市场环境与 CC</div></div>
+
+<div class="snum">七</div><div class="stitle">市场环境与 CC 有效性</div>
+<div class="chart-wrap"><div id="chart7"></div></div>
+<div class="chart-wrap"><div id="chart8"></div></div>
+<div class="cbox"><div class="cbox-body">强牛/极端牛时 CC 净值为负；熊市/平盘时 CC 贡献正。真实数据下 NVDA/GOOGL/TSLA 整段净负，与“高 IV=高权利金”的直觉相反——行权成本远超权利金。</div></div>
+<div style="border-top:2px dashed #ccc;margin:20px 0;"></div>
+
+<div class="snum">八</div><div class="stitle">全部结果总览（真实数据）</div>
+<table><thead><tr><th>股票</th><th>B&H</th><th>最佳CC净</th><th>综合</th><th>最优Δ</th><th>评级</th></tr></thead><tbody><tr><td class="left">AAPL</td><td class="positive">+115.8%</td><td class="hl-green">+23.5%</td><td class="hl-green"><strong>+139.3%</strong></td><td class="hl-blue">0.45</td><td>A</td></tr>
+<tr><td class="left">MSFT</td><td class="positive">+131.5%</td><td class="hl-green">+57.7%</td><td class="hl-green"><strong>+189.2%</strong></td><td class="hl-blue">0.5</td><td>A</td></tr>
+<tr><td class="left">GOOGL</td><td class="positive">+265.4%</td><td class="hl-red">-4.4%</td><td class="hl-green"><strong>+261.0%</strong></td><td class="hl-blue">0.05</td><td>C/D</td></tr>
+<tr><td class="left">AMZN</td><td class="positive">+44.9%</td><td class="hl-green">+18.7%</td><td class="hl-green"><strong>+63.6%</strong></td><td class="hl-blue">0.4</td><td>A</td></tr>
+<tr><td class="left">NVDA</td><td class="positive">+1326.2%</td><td class="hl-red">-25.0%</td><td class="hl-green"><strong>+1301.2%</strong></td><td class="hl-blue">0.05</td><td>C/D</td></tr>
+<tr><td class="left">META</td><td class="positive">+147.2%</td><td class="hl-green">+11.7%</td><td class="hl-green"><strong>+158.9%</strong></td><td class="hl-blue">0.15</td><td>B+</td></tr>
+<tr><td class="left">TSLA</td><td class="positive">+84.9%</td><td class="hl-green">+1.4%</td><td class="hl-green"><strong>+86.3%</strong></td><td class="hl-blue">0.05</td><td>B</td></tr></tbody></table>
+<div class="cbox"><div class="cbox-title">核心结论</div><div class="cbox-body">仅 <span class="hl">4/7</span> 在 Δ=0.20 下净 CC 为正；<span class="negative">NVDA、GOOGL、TSLA 上 CC 侵蚀价值</span>。本报告为 ThetaData 真实 bid/ask 回测，非模型估计。</div></div>
+<div class="qbox" style="border-left-color:#76B900;"><div class="qbox-title" style="color:#76B900;">NVDA — 真实数据：CC 灾难</div><div class="qbox-body"><p>B&H +1326%，但净 CC −173%（Δ=0.20），最优 Δ 下仍 −25%。权利金无法覆盖行权成本。</p></div></div>
+<div class="qbox" style="border-left-color:#CC0000;"><div class="qbox-title" style="color:#CC0000;">TSLA / GOOGL — CC 慎用</div><div class="qbox-body"><p>TSLA 净 CC −29%（最优仅 +1.4%）；GOOGL 净 CC −15.5%，最优 Δ 仍 −4.4%。</p></div></div>
+
+<div class="card-footer"><div class="pf">IV 与 Delta 交互</div><div class="pn">11</div></div>
+</div>
+
+<div class="card big">
+<div class="hdr"><div class="brand">RECOMMENDATIONS</div><div class="badge">九 · 投资建议</div></div>
+
+<div class="snum">九</div><div class="stitle">未来投资建议（基于真实回测）</div>
+<div class="h3">一般建议</div>
+<ol>
+<li><span class="bold">CC 在预期平盘/温和回报时最有效。</span>强烈看多时降低 Delta 或不做 CC。</li>
+<li><span class="bold">对 NVDA、GOOGL、TSLA：真实数据显示 CC 净负，建议回避或极保守 Delta。</span></li>
+<li><span class="bold">AAPL、MSFT、AMZN、META</span> 在真实数据下 CC 净正，可考虑叠加。</li>
+</ol>
+<div class="h3">各股票推荐（真实数据）</div>
+<table><thead><tr><th>股票</th><th>推荐</th><th>理由</th></tr></thead><tbody>
+<tr><td class="left">AAPL</td><td><span class="hl-blue">Δ=0.40～0.45</span></td><td style="text-align:left;">净 CC +9.3%（D20），最优 +23.5%</td></tr>
+<tr><td class="left">MSFT</td><td><span class="hl-blue">Δ=0.50</span></td><td style="text-align:left;">净 CC +16.9%，最优 +57.7%</td></tr>
+<tr><td class="left">GOOGL</td><td><span class="hl-red">回避 CC</span></td><td style="text-align:left;">全 Delta 净负，最优仍 −4.4%</td></tr>
+<tr><td class="left">AMZN</td><td><span class="hl-blue">Δ=0.40</span></td><td style="text-align:left;">净 CC +12.6%，最优 +18.7%</td></tr>
+<tr><td class="left">NVDA</td><td><span class="hl-red">强烈回避 CC</span></td><td style="text-align:left;">净 CC −173%，最优仍 −25%</td></tr>
+<tr><td class="left">META</td><td><span class="hl-blue">Δ=0.15</span></td><td style="text-align:left;">净 CC +9.1%，最优 +11.7%</td></tr>
+<tr><td class="left">TSLA</td><td><span class="hl-red">回避 CC</span></td><td style="text-align:left;">净 CC −29.3%，最优仅 +1.4%</td></tr>
+</tbody></table>
+<div style="border-top:2px dashed #ccc;margin:20px 0;"></div>
+
+<div class="stitle">组合级别（7 只各 $100K，真实数据）</div>
+<p>若每只 $100K、使用最优 Delta 的 CC 叠加：</p>
+<table><thead><tr><th>项目</th><th>金额</th></tr></thead><tbody>
+<tr><td class="left">B&H 终值（5年）</td><td><strong>$2.78M</strong></td></tr>
+<tr><td class="left">CC 净收入合计（最优 Δ）</td><td><span class="hl-blue">$84K</span></td></tr>
+<tr><td class="left"><span class="hl">组合总终值</span></td><td><span class="hl-green"><strong>$2.86M</strong></span></td></tr>
+<tr><td class="left">B&H 收益率</td><td class="positive">+296.7%</td></tr>
+<tr><td class="left">综合收益率</td><td><span class="hl-green"><strong>+308.6%</strong></span></td></tr>
+</tbody></table>
+<p class="note">部分股票（NVDA/GOOGL/TSLA）最优 Delta 下净 CC 仍为负，会拉低组合级 CC 贡献。</p>
+
+<div class="card-footer"><div class="pf">建议仅供参考</div><div class="pn">12</div></div>
+</div>
+
+<div class="card big">
+<div class="hdr"><div class="brand">APPENDIX</div><div class="badge">十 · 附录</div></div>
+<div class="snum">十</div><div class="stitle">数据来源与局限性</div>
+<div class="h3">数据来源</div>
+<div class="qbox"><div class="qbox-body">
+<p>• <span class="bold">股价与期权报价：</span>ThetaData API v3 真实历史 bid/ask（<span class="hl">非 Black-Scholes 模型</span>）</p>
+<p>• <span class="bold">规模：</span>约 5,000+ API 调用，7 股 × 60 月 × 多 Delta，单次回测约 49 分钟</p>
+<p>• <span class="bold">拆股：</span>GOOGL 20:1、AMZN 20:1、NVDA 4:1+10:1、TSLA 3:1 已调整</p>
+</div></div>
+<div class="h3">局限性</div>
+<div class="qbox"><div class="qbox-body">
+<p>1. 使用 bid/ask 中价，未考虑滑点与佣金</p>
+<p>2. 仅月度到期，未含周度期权</p>
+<p>3. 美式期权可提前行权，未建模</p>
+</div></div>
+<div class="h3">术语表</div>
+<table><thead><tr><th>术语</th><th>定义</th></tr></thead><tbody>
+<tr><td class="left bold">B&H</td><td style="text-align:left;">买入持有</td></tr>
+<tr><td class="left bold">CC</td><td style="text-align:left;">备兑看涨期权</td></tr>
+<tr><td class="left bold">Delta (Δ)</td><td style="text-align:left;">期权对股价敏感度；近似行权概率</td></tr>
+<tr><td class="left bold">净 CC</td><td style="text-align:left;">权利金 − 行权成本</td></tr>
+</tbody></table>
+<div style="margin-top:16px;padding:14px;background:#fff;border-radius:6px;text-align:center;border:1px solid #ddd;">
+<p style="font-size:17px;color:#666;margin:0;">本报告仅供教育研究。过往业绩不保证未来结果。期权有风险。</p>
+</div>
+<div class="card-footer"><div class="pf">© 2026 Mag 7 CC Backtest Report · 真实数据版</div><div class="pn">13</div></div>
+</div>
+
+<script>
+const opts={renderer:"canvas",actions:false,padding:{top:6,bottom:6,left:6,right:6}};
+
+vegaEmbed("#chart1",{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#0055aa",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 13,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#0055aa",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 16,
+      "fontWeight": 700,
+      "offset": 10,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 11
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-e6eb60aa51d468a08e138639a1cbe050"
+  },
+  "datasets": {
+    "data-e6eb60aa51d468a08e138639a1cbe050": [
+      {
+        "Return": 38.1,
+        "Stock": "AAPL",
+        "Year": "2021"
+      },
+      {
+        "Return": -28.2,
+        "Stock": "AAPL",
+        "Year": "2022"
+      },
+      {
+        "Return": 54.8,
+        "Stock": "AAPL",
+        "Year": "2023"
+      },
+      {
+        "Return": 35.6,
+        "Stock": "AAPL",
+        "Year": "2024"
+      },
+      {
+        "Return": 12.0,
+        "Stock": "AAPL",
+        "Year": "2025"
+      },
+      {
+        "Return": 55.8,
+        "Stock": "MSFT",
+        "Year": "2021"
+      },
+      {
+        "Return": -27.7,
+        "Stock": "MSFT",
+        "Year": "2022"
+      },
+      {
+        "Return": 58.3,
+        "Stock": "MSFT",
+        "Year": "2023"
+      },
+      {
+        "Return": 14.5,
+        "Stock": "MSFT",
+        "Year": "2024"
+      },
+      {
+        "Return": 16.4,
+        "Stock": "MSFT",
+        "Year": "2025"
+      },
+      {
+        "Return": 67.8,
+        "Stock": "GOOGL",
+        "Year": "2021"
+      },
+      {
+        "Return": -39.1,
+        "Stock": "GOOGL",
+        "Year": "2022"
+      },
+      {
+        "Return": 56.7,
+        "Stock": "GOOGL",
+        "Year": "2023"
+      },
+      {
+        "Return": 37.5,
+        "Stock": "GOOGL",
+        "Year": "2024"
+      },
+      {
+        "Return": 65.9,
+        "Stock": "GOOGL",
+        "Year": "2025"
+      },
+      {
+        "Return": 4.6,
+        "Stock": "AMZN",
+        "Year": "2021"
+      },
+      {
+        "Return": -50.7,
+        "Stock": "AMZN",
+        "Year": "2022"
+      },
+      {
+        "Return": 77.0,
+        "Stock": "AMZN",
+        "Year": "2023"
+      },
+      {
+        "Return": 46.3,
+        "Stock": "AMZN",
+        "Year": "2024"
+      },
+      {
+        "Return": 4.8,
+        "Stock": "AMZN",
+        "Year": "2025"
+      },
+      {
+        "Return": 124.5,
+        "Stock": "NVDA",
+        "Year": "2021"
+      },
+      {
+        "Return": -51.4,
+        "Stock": "NVDA",
+        "Year": "2022"
+      },
+      {
+        "Return": 246.1,
+        "Stock": "NVDA",
+        "Year": "2023"
+      },
+      {
+        "Return": 178.9,
+        "Stock": "NVDA",
+        "Year": "2024"
+      },
+      {
+        "Return": 34.9,
+        "Stock": "NVDA",
+        "Year": "2025"
+      },
+      {
+        "Return": 25.1,
+        "Stock": "META",
+        "Year": "2021"
+      },
+      {
+        "Return": -64.5,
+        "Stock": "META",
+        "Year": "2022"
+      },
+      {
+        "Return": 183.8,
+        "Stock": "META",
+        "Year": "2023"
+      },
+      {
+        "Return": 69.7,
+        "Stock": "META",
+        "Year": "2024"
+      },
+      {
+        "Return": 10.5,
+        "Stock": "META",
+        "Year": "2025"
+      },
+      {
+        "Return": 44.8,
+        "Stock": "TSLA",
+        "Year": "2021"
+      },
+      {
+        "Return": -69.2,
+        "Stock": "TSLA",
+        "Year": "2022"
+      },
+      {
+        "Return": 129.9,
+        "Stock": "TSLA",
+        "Year": "2023"
+      },
+      {
+        "Return": 62.6,
+        "Stock": "TSLA",
+        "Year": "2024"
+      },
+      {
+        "Return": 18.6,
+        "Stock": "TSLA",
+        "Year": "2025"
+      }
+    ]
+  },
+  "height": 280,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "Return",
+          "legend": {
+            "gradientLength": 180,
+            "labelFontSize": 10,
+            "title": "Return %",
+            "titleFontSize": 11
+          },
+          "scale": {
+            "domain": [
+              -70,
+              0,
+              70,
+              240
+            ],
+            "range": [
+              "#E53935",
+              "#FFCDD2",
+              "#C8E6C9",
+              "#43A047"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Year",
+            "type": "nominal"
+          },
+          {
+            "field": "Return",
+            "format": "+.1f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0,
+            "labelFontSize": 13,
+            "labelFontWeight": 600
+          },
+          "field": "Year",
+          "title": null,
+          "type": "ordinal"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 13,
+            "labelFontWeight": 600
+          },
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "title": null,
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "cornerRadius": 4,
+        "stroke": "#FAFBFC",
+        "strokeWidth": 2,
+        "type": "rect"
+      },
+      "title": {
+        "subtitle": "Green = up, Red = down",
+        "text": "Annual Stock Returns (%): 2021-2025"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "condition": {
+            "test": "(datum.Return>80)|(datum.Return<-50)",
+            "value": "white"
+          },
+          "value": "#0055aa"
+        },
+        "text": {
+          "field": "Return",
+          "format": "+.0f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Year",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 600,
+        "type": "text"
+      }
+    }
+  ],
+  "width": 480
+},opts);
+
+vegaEmbed("#chart2",{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#0055aa",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 13,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#0055aa",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 16,
+      "fontWeight": 700,
+      "offset": 10,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 11
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-cc30c8e9d9177103ff4e30918ff591da"
+  },
+  "datasets": {
+    "data-cc30c8e9d9177103ff4e30918ff591da": [
+      {
+        "CC Net %": 4.2,
+        "Delta": 0.05,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 9.1,
+        "Delta": 0.1,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 7.8,
+        "Delta": 0.15,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 9.3,
+        "Delta": 0.2,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 10.2,
+        "Delta": 0.25,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 7.9,
+        "Delta": 0.3,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 13.3,
+        "Delta": 0.35,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 19.6,
+        "Delta": 0.4,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 23.5,
+        "Delta": 0.45,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 18.0,
+        "Delta": 0.5,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 8.2,
+        "Delta": 0.05,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 10.2,
+        "Delta": 0.1,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 16.8,
+        "Delta": 0.15,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 16.9,
+        "Delta": 0.2,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 19.4,
+        "Delta": 0.25,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 25.0,
+        "Delta": 0.3,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 33.6,
+        "Delta": 0.35,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 38.9,
+        "Delta": 0.4,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 47.3,
+        "Delta": 0.45,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 57.7,
+        "Delta": 0.5,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": -4.4,
+        "Delta": 0.05,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -12.4,
+        "Delta": 0.1,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -13.3,
+        "Delta": 0.15,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -15.5,
+        "Delta": 0.2,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -18.8,
+        "Delta": 0.25,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -26.2,
+        "Delta": 0.3,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -27.3,
+        "Delta": 0.35,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -24.5,
+        "Delta": 0.4,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -28.8,
+        "Delta": 0.45,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -31.9,
+        "Delta": 0.5,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 5.3,
+        "Delta": 0.05,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 9.0,
+        "Delta": 0.1,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 12.0,
+        "Delta": 0.15,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 12.6,
+        "Delta": 0.2,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 16.6,
+        "Delta": 0.25,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 11.4,
+        "Delta": 0.3,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 17.0,
+        "Delta": 0.35,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 18.7,
+        "Delta": 0.4,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 18.7,
+        "Delta": 0.45,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 15.4,
+        "Delta": 0.5,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": -25.0,
+        "Delta": 0.05,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": -118.1,
+        "Delta": 0.1,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": -144.5,
+        "Delta": 0.15,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": -173.1,
+        "Delta": 0.2,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": -234.0,
+        "Delta": 0.25,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": -240.2,
+        "Delta": 0.3,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": -329.9,
+        "Delta": 0.35,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": -343.6,
+        "Delta": 0.4,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": -366.2,
+        "Delta": 0.45,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": -400.8,
+        "Delta": 0.5,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 7.8,
+        "Delta": 0.05,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 11.1,
+        "Delta": 0.1,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 11.7,
+        "Delta": 0.15,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 9.1,
+        "Delta": 0.2,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 11.6,
+        "Delta": 0.25,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 9.2,
+        "Delta": 0.3,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 9.2,
+        "Delta": 0.35,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 11.0,
+        "Delta": 0.4,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 10.2,
+        "Delta": 0.45,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 11.3,
+        "Delta": 0.5,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 1.4,
+        "Delta": 0.05,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -9.4,
+        "Delta": 0.1,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -17.0,
+        "Delta": 0.15,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -29.3,
+        "Delta": 0.2,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -41.2,
+        "Delta": 0.25,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -52.0,
+        "Delta": 0.3,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -58.8,
+        "Delta": 0.35,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -60.3,
+        "Delta": 0.4,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -59.1,
+        "Delta": 0.45,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -58.1,
+        "Delta": 0.5,
+        "Stock": "TSLA"
+      }
+    ],
+    "data-d1625165dbdd21715c9d24f150a93ec7": [
+      {
+        "CC Net %": 23.5,
+        "Delta": 0.45,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 57.7,
+        "Delta": 0.5,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": -4.4,
+        "Delta": 0.05,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 18.7,
+        "Delta": 0.4,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": -25.0,
+        "Delta": 0.05,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 11.7,
+        "Delta": 0.15,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 1.4,
+        "Delta": 0.05,
+        "Stock": "TSLA"
+      }
+    ]
+  },
+  "height": 280,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "CC Net %",
+          "legend": {
+            "gradientLength": 180,
+            "title": "Net CC %",
+            "titleFontSize": 11
+          },
+          "scale": {
+            "domain": [
+              -400.8,
+              -5,
+              0,
+              30,
+              60
+            ],
+            "range": [
+              "#B71C1C",
+              "#E53935",
+              "#FFEBEE",
+              "#E8F5E9",
+              "#43A047"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Delta",
+            "format": ".2f",
+            "type": "quantitative"
+          },
+          {
+            "field": "CC Net %",
+            "format": "+.1f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0,
+            "labelFontSize": 11,
+            "labelFontWeight": 500
+          },
+          "field": "Delta",
+          "title": "Target Delta",
+          "type": "ordinal"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 13,
+            "labelFontWeight": 600
+          },
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "title": null,
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "cornerRadius": 3,
+        "stroke": "#FAFBFC",
+        "strokeWidth": 1.5,
+        "type": "rect"
+      },
+      "title": {
+        "subtitle": "\u2605 = optimal delta per stock",
+        "text": "Delta Grid: Net CC % (Real ThetaData)"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "condition": {
+            "test": "(datum['CC Net %']>60)|(datum['CC Net %']<-15)",
+            "value": "white"
+          },
+          "value": "#37474F"
+        },
+        "text": {
+          "field": "CC Net %",
+          "format": "+.0f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Delta",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 8,
+        "fontWeight": 500,
+        "type": "text"
+      }
+    },
+    {
+      "data": {
+        "name": "data-d1625165dbdd21715c9d24f150a93ec7"
+      },
+      "encoding": {
+        "color": {
+          "value": "#0055aa"
+        },
+        "x": {
+          "field": "Delta",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "fontSize": 16,
+        "fontWeight": 700,
+        "text": "\u2605",
+        "type": "text"
+      }
+    }
+  ],
+  "width": 580
+},opts);
+
+vegaEmbed("#chart3",{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#0055aa",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 13,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#0055aa",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 16,
+      "fontWeight": 700,
+      "offset": 10,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 11
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-5efee6e7494e26c140f0d51cfa1d862a"
+  },
+  "datasets": {
+    "data-14980d693eb32c0f6ea3887db4a6c27f": [
+      {
+        "text": "NVDA (off-chart)\nB&H: +1326%\nCombined: +1301%\nCC Net D20: -173%\n\u0394: 0.05"
+      }
+    ],
+    "data-5efee6e7494e26c140f0d51cfa1d862a": [
+      {
+        "Optimal Delta": 0.45,
+        "Return %": 115.8,
+        "Stock": "AAPL",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.5,
+        "Return %": 131.5,
+        "Stock": "MSFT",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.05,
+        "Return %": 265.4,
+        "Stock": "GOOGL",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.4,
+        "Return %": 44.9,
+        "Stock": "AMZN",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.15,
+        "Return %": 147.2,
+        "Stock": "META",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.05,
+        "Return %": 84.9,
+        "Stock": "TSLA",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.45,
+        "Return %": 139.3,
+        "Stock": "AAPL",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.5,
+        "Return %": 189.2,
+        "Stock": "MSFT",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.05,
+        "Return %": 261.0,
+        "Stock": "GOOGL",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.4,
+        "Return %": 63.6,
+        "Stock": "AMZN",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.15,
+        "Return %": 158.9,
+        "Stock": "META",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.05,
+        "Return %": 86.3,
+        "Stock": "TSLA",
+        "Strategy": "Combined"
+      }
+    ],
+    "data-d285a7403ed98ae579761d64a864032b": [
+      {
+        "x": 0
+      }
+    ]
+  },
+  "height": 300,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "Strategy",
+          "legend": {
+            "labelFontSize": 12,
+            "offset": 8,
+            "orient": "top-left",
+            "symbolSize": 120,
+            "title": null
+          },
+          "scale": {
+            "domain": [
+              "B&H",
+              "Combined"
+            ],
+            "range": [
+              "#90A4AE",
+              "#0055aa"
+            ]
+          },
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Strategy",
+            "type": "nominal"
+          },
+          {
+            "field": "Return %",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0,
+            "labelFontSize": 13,
+            "labelFontWeight": 600
+          },
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "TSLA"
+          ],
+          "title": null,
+          "type": "nominal"
+        },
+        "xOffset": {
+          "field": "Strategy",
+          "sort": [
+            "B&H",
+            "Combined"
+          ],
+          "type": "nominal"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 11
+          },
+          "field": "Return %",
+          "title": "5-Year Return (%)",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "cornerRadiusTopLeft": 4,
+        "cornerRadiusTopRight": 4,
+        "size": 24,
+        "type": "bar"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "value": "#0055aa"
+        },
+        "text": {
+          "field": "Return %",
+          "format": "+.0f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "TSLA"
+          ],
+          "type": "nominal"
+        },
+        "xOffset": {
+          "field": "Strategy",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "Return %",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "dy": -8,
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 10,
+        "fontWeight": 600,
+        "type": "text"
+      }
+    },
+    {
+      "data": {
+        "name": "data-d285a7403ed98ae579761d64a864032b"
+      },
+      "encoding": {
+        "color": {
+          "value": "#E8EAF6"
+        },
+        "opacity": {
+          "value": 0.7
+        },
+        "x": {
+          "value": 330
+        },
+        "x2": {
+          "value": 510
+        },
+        "y": {
+          "value": 8
+        },
+        "y2": {
+          "value": 100
+        }
+      },
+      "mark": {
+        "cornerRadius": 8,
+        "type": "rect"
+      }
+    },
+    {
+      "data": {
+        "name": "data-14980d693eb32c0f6ea3887db4a6c27f"
+      },
+      "encoding": {
+        "text": {
+          "field": "text",
+          "type": "nominal"
+        },
+        "x": {
+          "value": 340
+        },
+        "y": {
+          "value": 25
+        }
+      },
+      "mark": {
+        "align": "left",
+        "color": "#0055aa",
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 12,
+        "fontWeight": 600,
+        "lineBreak": "\n",
+        "type": "text"
+      }
+    }
+  ],
+  "title": {
+    "subtitle": "NVDA excluded",
+    "text": "5-Year: B&H vs B&H + CC (Real Data)"
+  },
+  "width": 460
+},opts);
+
+vegaEmbed("#chart4",{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#0055aa",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 13,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#0055aa",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 16,
+      "fontWeight": 700,
+      "offset": 10,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 11
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-ed591ff671ffd6711e3bc4f627e74084"
+  },
+  "datasets": {
+    "data-ed591ff671ffd6711e3bc4f627e74084": [
+      {
+        "Net CC": 1.5,
+        "Stock": "AAPL",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 6.8,
+        "Stock": "AAPL",
+        "Year": "2022"
+      },
+      {
+        "Net CC": 3.5,
+        "Stock": "AAPL",
+        "Year": "2023"
+      },
+      {
+        "Net CC": 0.8,
+        "Stock": "AAPL",
+        "Year": "2024"
+      },
+      {
+        "Net CC": -3.4,
+        "Stock": "AAPL",
+        "Year": "2025"
+      },
+      {
+        "Net CC": 6.0,
+        "Stock": "MSFT",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 7.8,
+        "Stock": "MSFT",
+        "Year": "2022"
+      },
+      {
+        "Net CC": 0.2,
+        "Stock": "MSFT",
+        "Year": "2023"
+      },
+      {
+        "Net CC": -3.0,
+        "Stock": "MSFT",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 6.0,
+        "Stock": "MSFT",
+        "Year": "2025"
+      },
+      {
+        "Net CC": 3.5,
+        "Stock": "GOOGL",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -10.8,
+        "Stock": "GOOGL",
+        "Year": "2023"
+      },
+      {
+        "Net CC": -0.8,
+        "Stock": "GOOGL",
+        "Year": "2024"
+      },
+      {
+        "Net CC": -7.4,
+        "Stock": "GOOGL",
+        "Year": "2025"
+      },
+      {
+        "Net CC": 3.4,
+        "Stock": "AMZN",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -1.1,
+        "Stock": "AMZN",
+        "Year": "2023"
+      },
+      {
+        "Net CC": 2.5,
+        "Stock": "AMZN",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 7.8,
+        "Stock": "AMZN",
+        "Year": "2025"
+      },
+      {
+        "Net CC": -30.6,
+        "Stock": "NVDA",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 16.0,
+        "Stock": "NVDA",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -17.9,
+        "Stock": "NVDA",
+        "Year": "2023"
+      },
+      {
+        "Net CC": -76.5,
+        "Stock": "NVDA",
+        "Year": "2024"
+      },
+      {
+        "Net CC": -64.2,
+        "Stock": "NVDA",
+        "Year": "2025"
+      },
+      {
+        "Net CC": 0.7,
+        "Stock": "META",
+        "Year": "2022"
+      },
+      {
+        "Net CC": 2.3,
+        "Stock": "META",
+        "Year": "2023"
+      },
+      {
+        "Net CC": -1.9,
+        "Stock": "META",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 8.0,
+        "Stock": "META",
+        "Year": "2025"
+      },
+      {
+        "Net CC": 7.8,
+        "Stock": "TSLA",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 14.9,
+        "Stock": "TSLA",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -11.4,
+        "Stock": "TSLA",
+        "Year": "2023"
+      },
+      {
+        "Net CC": -18.6,
+        "Stock": "TSLA",
+        "Year": "2024"
+      },
+      {
+        "Net CC": -22.0,
+        "Stock": "TSLA",
+        "Year": "2025"
+      }
+    ]
+  },
+  "encoding": {
+    "color": {
+      "field": "Net CC",
+      "legend": null,
+      "scale": {
+        "domain": [
+          -200,
+          0,
+          50,
+          140
+        ],
+        "range": [
+          "#E53935",
+          "#FFEBEE",
+          "#E8F5E9",
+          "#43A047"
+        ]
+      },
+      "type": "quantitative"
+    },
+    "column": {
+      "field": "Stock",
+      "header": {
+        "labelColor": "#0055aa",
+        "labelFontSize": 12,
+        "labelFontWeight": 700
+      },
+      "sort": [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "NVDA",
+        "META",
+        "TSLA"
+      ],
+      "title": null,
+      "type": "nominal"
+    },
+    "tooltip": [
+      {
+        "field": "Stock",
+        "type": "nominal"
+      },
+      {
+        "field": "Year",
+        "type": "nominal"
+      },
+      {
+        "field": "Net CC",
+        "format": "+.1f",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "axis": {
+        "labelAngle": -45,
+        "labelFontSize": 10,
+        "labelFontWeight": 500
+      },
+      "field": "Year",
+      "title": null,
+      "type": "ordinal"
+    },
+    "y": {
+      "axis": {
+        "labelFontSize": 10
+      },
+      "field": "Net CC",
+      "title": "Net CC (%)",
+      "type": "quantitative"
+    }
+  },
+  "height": 220,
+  "mark": {
+    "cornerRadiusTopLeft": 3,
+    "cornerRadiusTopRight": 3,
+    "type": "bar"
+  },
+  "title": {
+    "subtitle": "Real bid/ask",
+    "text": "Net CC by Year (\u0394=0.20)"
+  },
+  "width": 70
+},opts);
+
+vegaEmbed("#chart5",{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#0055aa",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 13,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#0055aa",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 16,
+      "fontWeight": 700,
+      "offset": 10,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 11
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-5a8570a1ebe9a7d9204bc1f85c873b88"
+  },
+  "datasets": {
+    "data-5a8570a1ebe9a7d9204bc1f85c873b88": [
+      {
+        "IV": 25.4,
+        "Stock": "AAPL",
+        "Year": "2021"
+      },
+      {
+        "IV": 25.4,
+        "Stock": "AAPL",
+        "Year": "2022"
+      },
+      {
+        "IV": 25.4,
+        "Stock": "AAPL",
+        "Year": "2023"
+      },
+      {
+        "IV": 25.4,
+        "Stock": "AAPL",
+        "Year": "2024"
+      },
+      {
+        "IV": 25.4,
+        "Stock": "AAPL",
+        "Year": "2025"
+      },
+      {
+        "IV": 22.2,
+        "Stock": "MSFT",
+        "Year": "2021"
+      },
+      {
+        "IV": 22.2,
+        "Stock": "MSFT",
+        "Year": "2022"
+      },
+      {
+        "IV": 22.2,
+        "Stock": "MSFT",
+        "Year": "2023"
+      },
+      {
+        "IV": 22.2,
+        "Stock": "MSFT",
+        "Year": "2024"
+      },
+      {
+        "IV": 22.2,
+        "Stock": "MSFT",
+        "Year": "2025"
+      },
+      {
+        "IV": 27.5,
+        "Stock": "GOOGL",
+        "Year": "2021"
+      },
+      {
+        "IV": 27.5,
+        "Stock": "GOOGL",
+        "Year": "2022"
+      },
+      {
+        "IV": 27.5,
+        "Stock": "GOOGL",
+        "Year": "2023"
+      },
+      {
+        "IV": 27.5,
+        "Stock": "GOOGL",
+        "Year": "2024"
+      },
+      {
+        "IV": 27.5,
+        "Stock": "GOOGL",
+        "Year": "2025"
+      },
+      {
+        "IV": 33.1,
+        "Stock": "AMZN",
+        "Year": "2021"
+      },
+      {
+        "IV": 33.1,
+        "Stock": "AMZN",
+        "Year": "2022"
+      },
+      {
+        "IV": 33.1,
+        "Stock": "AMZN",
+        "Year": "2023"
+      },
+      {
+        "IV": 33.1,
+        "Stock": "AMZN",
+        "Year": "2024"
+      },
+      {
+        "IV": 33.1,
+        "Stock": "AMZN",
+        "Year": "2025"
+      },
+      {
+        "IV": 45.0,
+        "Stock": "NVDA",
+        "Year": "2021"
+      },
+      {
+        "IV": 45.0,
+        "Stock": "NVDA",
+        "Year": "2022"
+      },
+      {
+        "IV": 45.0,
+        "Stock": "NVDA",
+        "Year": "2023"
+      },
+      {
+        "IV": 45.0,
+        "Stock": "NVDA",
+        "Year": "2024"
+      },
+      {
+        "IV": 45.0,
+        "Stock": "NVDA",
+        "Year": "2025"
+      },
+      {
+        "IV": 32.9,
+        "Stock": "META",
+        "Year": "2021"
+      },
+      {
+        "IV": 32.9,
+        "Stock": "META",
+        "Year": "2022"
+      },
+      {
+        "IV": 32.9,
+        "Stock": "META",
+        "Year": "2023"
+      },
+      {
+        "IV": 32.9,
+        "Stock": "META",
+        "Year": "2024"
+      },
+      {
+        "IV": 32.9,
+        "Stock": "META",
+        "Year": "2025"
+      },
+      {
+        "IV": 56.7,
+        "Stock": "TSLA",
+        "Year": "2021"
+      },
+      {
+        "IV": 56.7,
+        "Stock": "TSLA",
+        "Year": "2022"
+      },
+      {
+        "IV": 56.7,
+        "Stock": "TSLA",
+        "Year": "2023"
+      },
+      {
+        "IV": 56.7,
+        "Stock": "TSLA",
+        "Year": "2024"
+      },
+      {
+        "IV": 56.7,
+        "Stock": "TSLA",
+        "Year": "2025"
+      }
+    ]
+  },
+  "height": 280,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "IV",
+          "legend": {
+            "gradientLength": 160,
+            "title": "IV %",
+            "titleFontSize": 11
+          },
+          "scale": {
+            "domain": [
+              20,
+              35,
+              50,
+              65
+            ],
+            "range": [
+              "#E3F2FD",
+              "#42A5F5",
+              "#1565C0",
+              "#0055aa"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Year",
+            "type": "nominal"
+          },
+          {
+            "field": "IV",
+            "format": ".1f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0,
+            "labelFontSize": 12,
+            "labelFontWeight": 500
+          },
+          "field": "Year",
+          "title": null,
+          "type": "ordinal"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 13,
+            "labelFontWeight": 600
+          },
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "title": null,
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "cornerRadius": 4,
+        "stroke": "#FAFBFC",
+        "strokeWidth": 2,
+        "type": "rect"
+      },
+      "title": {
+        "subtitle": "Avg IV per stock",
+        "text": "Implied Volatility (from real options)"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "condition": {
+            "test": "datum.IV>45",
+            "value": "white"
+          },
+          "value": "#0055aa"
+        },
+        "text": {
+          "field": "IV",
+          "format": ".0f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Year",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 600,
+        "type": "text"
+      }
+    }
+  ],
+  "width": 480
+},opts);
+
+vegaEmbed("#chart6",{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#0055aa",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 13,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#0055aa",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 16,
+      "fontWeight": 700,
+      "offset": 10,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 11
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-9b7b6f2850fd962adbbfde54d8f6e90c"
+  },
+  "datasets": {
+    "data-9b7b6f2850fd962adbbfde54d8f6e90c": [
+      {
+        "Amount": 44135,
+        "Amount $K": 44.135,
+        "Stock": "AAPL",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 40874,
+        "Amount $K": 40.874,
+        "Stock": "MSFT",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 43208,
+        "Amount $K": 43.208,
+        "Stock": "GOOGL",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 29637,
+        "Amount $K": 29.637,
+        "Stock": "AMZN",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 283366,
+        "Amount $K": 283.366,
+        "Stock": "NVDA",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 37710,
+        "Amount $K": 37.71,
+        "Stock": "META",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 74134,
+        "Amount $K": 74.134,
+        "Stock": "TSLA",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 34829,
+        "Amount $K": 34.829,
+        "Stock": "AAPL",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 23925,
+        "Amount $K": 23.925,
+        "Stock": "MSFT",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 58697,
+        "Amount $K": 58.697,
+        "Stock": "GOOGL",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 17040,
+        "Amount $K": 17.04,
+        "Stock": "AMZN",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 456491,
+        "Amount $K": 456.491,
+        "Stock": "NVDA",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 28567,
+        "Amount $K": 28.567,
+        "Stock": "META",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 103429,
+        "Amount $K": 103.429,
+        "Stock": "TSLA",
+        "Type": "Assignment Cost"
+      }
+    ]
+  },
+  "encoding": {
+    "color": {
+      "field": "Type",
+      "legend": {
+        "labelFontSize": 12,
+        "orient": "top-right",
+        "symbolSize": 120,
+        "title": null
+      },
+      "scale": {
+        "domain": [
+          "Premium",
+          "Assignment Cost"
+        ],
+        "range": [
+          "#43A047",
+          "#E53935"
+        ]
+      },
+      "type": "nominal"
+    },
+    "tooltip": [
+      {
+        "field": "Stock",
+        "type": "nominal"
+      },
+      {
+        "field": "Type",
+        "type": "nominal"
+      },
+      {
+        "field": "Amount $K",
+        "format": "$,.0f",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "axis": {
+        "labelAngle": 0,
+        "labelFontSize": 13,
+        "labelFontWeight": 600
+      },
+      "field": "Stock",
+      "sort": [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "NVDA",
+        "META",
+        "TSLA"
+      ],
+      "title": null,
+      "type": "nominal"
+    },
+    "xOffset": {
+      "field": "Type",
+      "sort": [
+        "Premium",
+        "Assignment Cost"
+      ],
+      "type": "nominal"
+    },
+    "y": {
+      "axis": {
+        "format": "$,.0f",
+        "labelFontSize": 11
+      },
+      "field": "Amount $K",
+      "title": "Amount ($K)",
+      "type": "quantitative"
+    }
+  },
+  "height": 300,
+  "mark": {
+    "cornerRadiusTopLeft": 4,
+    "cornerRadiusTopRight": 4,
+    "size": 22,
+    "type": "bar"
+  },
+  "title": {
+    "subtitle": "Real ThetaData",
+    "text": "Premium vs Assignment Cost (\u0394=0.20)"
+  },
+  "width": 500
+},opts);
+
+vegaEmbed("#chart7",{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#0055aa",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 13,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#0055aa",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 16,
+      "fontWeight": 700,
+      "offset": 10,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 11
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-2c3cf09d742d8277adeaccd9b8fa7627"
+  },
+  "datasets": {
+    "data-2c3cf09d742d8277adeaccd9b8fa7627": [
+      {
+        "Avg CC Net": 9.3,
+        "Positive Rate": 88.0,
+        "Regime": "Bear Year"
+      },
+      {
+        "Avg CC Net": 7.8,
+        "Positive Rate": 100.0,
+        "Regime": "Mild Bull 0-20%"
+      },
+      {
+        "Avg CC Net": 2.5,
+        "Positive Rate": 38.0,
+        "Regime": "Moderate Bull 20-50%"
+      },
+      {
+        "Avg CC Net": -6.1,
+        "Positive Rate": 29.0,
+        "Regime": "Strong Bull 50-100%"
+      },
+      {
+        "Avg CC Net": -23.4,
+        "Positive Rate": 0.0,
+        "Regime": "Extreme Bull >100%"
+      }
+    ],
+    "data-d285a7403ed98ae579761d64a864032b": [
+      {
+        "x": 0
+      }
+    ]
+  },
+  "height": 200,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "Avg CC Net",
+          "legend": null,
+          "scale": {
+            "domain": [
+              -25,
+              0,
+              12
+            ],
+            "range": [
+              "#E53935",
+              "#FFEBEE",
+              "#43A047"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Regime",
+            "type": "nominal"
+          },
+          {
+            "field": "Avg CC Net",
+            "format": "+.1f",
+            "type": "quantitative"
+          },
+          {
+            "field": "Positive Rate",
+            "format": ".0f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelFontSize": 11
+          },
+          "field": "Avg CC Net",
+          "title": "Avg CC Net (%)",
+          "type": "quantitative"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 12,
+            "labelFontWeight": 600
+          },
+          "field": "Regime",
+          "sort": [
+            "Bear Year",
+            "Mild Bull 0-20%",
+            "Moderate Bull 20-50%",
+            "Strong Bull 50-100%",
+            "Extreme Bull >100%"
+          ],
+          "title": null,
+          "type": "nominal"
+        }
+      },
+      "mark": {
+        "cornerRadius": 4,
+        "height": 24,
+        "type": "bar"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "value": "#0055aa"
+        },
+        "text": {
+          "field": "Avg CC Net",
+          "format": "+.1f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Avg CC Net",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "Regime",
+          "sort": [
+            "Bear Year",
+            "Mild Bull 0-20%",
+            "Moderate Bull 20-50%",
+            "Strong Bull 50-100%",
+            "Extreme Bull >100%"
+          ],
+          "type": "nominal"
+        }
+      },
+      "mark": {
+        "align": "left",
+        "dx": 5,
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 700,
+        "type": "text"
+      }
+    },
+    {
+      "data": {
+        "name": "data-d285a7403ed98ae579761d64a864032b"
+      },
+      "encoding": {
+        "x": {
+          "field": "x",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "color": "#90A4AE",
+        "strokeDash": [
+          4,
+          4
+        ],
+        "strokeWidth": 1.5,
+        "type": "rule"
+      }
+    }
+  ],
+  "title": {
+    "subtitle": "Conceptual",
+    "text": "CC by Market Regime (\u0394=0.20)"
+  },
+  "width": 460
+},opts);
+
+vegaEmbed("#chart8",{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#0055aa",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 13,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 11,
+      "titleColor": "#0055aa",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 12
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#0055aa",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 16,
+      "fontWeight": 700,
+      "offset": 10,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 11
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-6ce19e7b2dd1338f9c7aafab1914d2ad"
+  },
+  "datasets": {
+    "data-6ce19e7b2dd1338f9c7aafab1914d2ad": [
+      {
+        "Avg IV": 25.4,
+        "B&H": 115.8,
+        "CC Net": 9.3,
+        "Combined": 139.3,
+        "Optimal Delta": 0.45,
+        "Stock": "AAPL"
+      },
+      {
+        "Avg IV": 22.2,
+        "B&H": 131.5,
+        "CC Net": 16.9,
+        "Combined": 189.2,
+        "Optimal Delta": 0.5,
+        "Stock": "MSFT"
+      },
+      {
+        "Avg IV": 27.5,
+        "B&H": 265.4,
+        "CC Net": -15.5,
+        "Combined": 261.0,
+        "Optimal Delta": 0.05,
+        "Stock": "GOOGL"
+      },
+      {
+        "Avg IV": 33.1,
+        "B&H": 44.9,
+        "CC Net": 12.6,
+        "Combined": 63.6,
+        "Optimal Delta": 0.4,
+        "Stock": "AMZN"
+      },
+      {
+        "Avg IV": 45.0,
+        "B&H": 1326.2,
+        "CC Net": -173.1,
+        "Combined": 1301.2,
+        "Optimal Delta": 0.05,
+        "Stock": "NVDA"
+      },
+      {
+        "Avg IV": 32.9,
+        "B&H": 147.2,
+        "CC Net": 9.1,
+        "Combined": 158.9,
+        "Optimal Delta": 0.15,
+        "Stock": "META"
+      },
+      {
+        "Avg IV": 56.7,
+        "B&H": 84.9,
+        "CC Net": -29.3,
+        "Combined": 86.3,
+        "Optimal Delta": 0.05,
+        "Stock": "TSLA"
+      }
+    ]
+  },
+  "height": 300,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "CC Net",
+          "legend": {
+            "gradientLength": 140,
+            "title": "CC Net % (D20)",
+            "titleFontSize": 11
+          },
+          "scale": {
+            "domain": [
+              -180,
+              0,
+              60
+            ],
+            "range": [
+              "#B71C1C",
+              "#FFCDD2",
+              "#43A047"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Avg IV",
+            "format": ".0f",
+            "type": "quantitative"
+          },
+          {
+            "field": "Optimal Delta",
+            "format": ".2f",
+            "type": "quantitative"
+          },
+          {
+            "field": "CC Net",
+            "format": "+.1f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelFontSize": 11
+          },
+          "field": "Avg IV",
+          "scale": {
+            "domain": [
+              22,
+              62
+            ]
+          },
+          "title": "Average IV (%)",
+          "type": "quantitative"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 11
+          },
+          "field": "Optimal Delta",
+          "scale": {
+            "domain": [
+              0.04,
+              0.55
+            ]
+          },
+          "title": "Optimal Delta",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "size": 220,
+        "stroke": "white",
+        "strokeWidth": 2,
+        "type": "circle"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "value": "#0055aa"
+        },
+        "text": {
+          "field": "Stock",
+          "type": "nominal"
+        },
+        "x": {
+          "field": "Avg IV",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "Optimal Delta",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "dy": -14,
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 13,
+        "fontWeight": 700,
+        "type": "text"
+      }
+    }
+  ],
+  "title": {
+    "subtitle": "Real data: 4/7 positive CC at D20",
+    "text": "Optimal Delta vs Avg IV"
+  },
+  "width": 480
+},opts);
+
+</script>
+</body>
+</html>

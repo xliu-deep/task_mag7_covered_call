@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mag 7 Covered Call Backtest — Real Option Data</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --deep-blue: #1A237E; --slate: #90A4AE; --bg: #FAFBFC; --card: #FFFFFF;
+          --shadow: 0 2px 16px rgba(26,35,126,0.06); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+         background: var(--bg); color: #263238; line-height: 1.7; }
+  .hero { background: linear-gradient(135deg, #1A237E 0%, #283593 50%, #3949AB 100%);
+          color: white; padding: 64px 48px 56px; text-align: center; }
+  .hero h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
+  .hero p { font-size: 1.1rem; opacity: 0.85; max-width: 700px; margin: 0 auto; }
+  .hero .meta { margin-top: 20px; font-size: 0.9rem; opacity: 0.6; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 32px 0; }
+  .kpi { background: var(--card); border-radius: 12px; box-shadow: var(--shadow);
+         padding: 24px 20px; text-align: center; }
+  .kpi .value { font-size: 1.8rem; font-weight: 800; color: var(--deep-blue); }
+  .kpi .label { font-size: 0.82rem; color: var(--slate); margin-top: 4px; font-weight: 500; }
+  .section { background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
+             padding: 40px 36px 32px; margin: 32px 0; }
+  .section h2 { font-size: 1.3rem; font-weight: 700; color: var(--deep-blue);
+                margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #E8EAF6; }
+  .section h3 { font-size: 1.05rem; font-weight: 700; color: #37474F;
+                margin: 24px 0 12px 0; }
+  .section p { margin-bottom: 12px; font-size: 0.95rem; color: #455A64; }
+  .section ul, .section ol { margin: 8px 0 16px 24px; font-size: 0.95rem; color: #455A64; }
+  .section li { margin-bottom: 6px; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.88rem; }
+  th { background: #E8EAF6; color: var(--deep-blue); padding: 10px 8px;
+       text-align: center; font-weight: 700; border: 1px solid #C5CAE9; white-space: nowrap; }
+  td { padding: 8px; text-align: center; border: 1px solid #E0E0E0; }
+  td.left { text-align: left; font-weight: 600; }
+  tr:nth-child(even) { background: #FAFAFA; }
+  .positive { color: #2E7D32; font-weight: 600; }
+  .negative { color: #C62828; font-weight: 600; }
+  .chart-wrap { margin: 24px 0; }
+  .chart-wrap h3 { font-size: 0.95rem; color: var(--slate); margin-bottom: 8px; font-weight: 500; }
+  blockquote { border-left: 4px solid #C5CAE9; padding: 12px 16px; margin: 16px 0;
+               background: #EDE7F6; border-radius: 0 8px 8px 0; font-size: 0.92rem; color: #37474F; }
+  .callout { background: #E8F5E9; border: 1px solid #A5D6A7; border-radius: 8px;
+             padding: 16px; margin: 16px 0; font-size: 0.92rem; }
+  .callout-warn { background: #FFF3E0; border: 1px solid #FFB74D; }
+  code { background: #ECEFF1; padding: 2px 6px; border-radius: 4px; font-size: 0.88rem; }
+  .vega-embed { width: 100% !important; }
+  .vega-embed .vega-actions { display: none !important; }
+  .footer { text-align: center; padding: 40px; color: var(--slate); font-size: 0.85rem; }
+  @media (max-width: 768px) {
+    .hero { padding: 40px 24px; } .hero h1 { font-size: 1.6rem; }
+    .section { padding: 24px 16px; } .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    table { font-size: 0.78rem; } th, td { padding: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Magnificent 7 - Covered Call Backtest (Real Data)</h1>
+  <p>60-month backtest of monthly CC overlay strategies using <strong>real ThetaData bid/ask option premiums</strong>.<br>
+  Initial capital $100K per stock. All premiums, deltas, and assignment costs from actual market data.</p>
+  <div class="meta">Jan 2021 - Dec 2025 &nbsp;|&nbsp; Delta Grid: 0.05 - 0.50 &nbsp;|&nbsp; Model: CC Overlay (always hold stock) &nbsp;|&nbsp; Data: Real ThetaData bid/ask</div>
+</div>
+
+<div class="container">
+
+<div class="kpi-row">
+  <div class="kpi"><div class="value">+272%</div><div class="label">Portfolio Combined Return</div></div>
+  <div class="kpi"><div class="value">$9,218</div><div class="label">Avg Monthly CC Premium (7 stocks)</div></div>
+  <div class="kpi"><div class="value">4 / 7</div><div class="label">Stocks with Positive CC Net</div></div>
+  <div class="kpi"><div class="value">+16.9%</div><div class="label">Best CC Net (MSFT)</div></div>
+</div>
+
+<div class="section">
+<h2>1. Executive Summary</h2>
+<p>This report backtests a <strong>monthly covered call (CC) overlay strategy</strong> on the Magnificent 7 stocks over 2021-2025 using <strong>real option market data</strong> from ThetaData (actual bid/ask prices, not model estimates).</p>
+
+<div class="callout-warn callout">
+<strong>Critical finding:</strong> Unlike Black-Scholes model estimates that showed all 7 stocks benefiting from CC overlays, <strong>real market data reveals that CC overlays DESTROYED value on 3 out of 7 stocks</strong> — specifically the explosive growth stocks (NVDA, GOOGL, TSLA). The assignment costs from strong rallies far exceeded premium income.
+</div>
+
+<table>
+<tr><th>Stock</th><th>B&H Return</th><th>Best CC Net</th><th>Combined Return</th><th>Optimal Delta</th><th>CC Grade</th></tr>
+<tr><td class="left">AAPL</td><td class="positive">+115.8%</td><td class="positive">+23.5%</td><td class="positive"><strong>+139.3%</strong></td><td>0.45</td><td>A+</td></tr>
+<tr><td class="left">MSFT</td><td class="positive">+131.5%</td><td class="positive">+57.7%</td><td class="positive"><strong>+189.2%</strong></td><td>0.5</td><td>A+</td></tr>
+<tr><td class="left">GOOGL</td><td class="positive">+265.4%</td><td class="negative">-4.4%</td><td class="positive"><strong>+261.0%</strong></td><td>0.05</td><td>C</td></tr>
+<tr><td class="left">AMZN</td><td class="positive">+44.9%</td><td class="positive">+18.7%</td><td class="positive"><strong>+63.6%</strong></td><td>0.4</td><td>A+</td></tr>
+<tr><td class="left">NVDA</td><td class="positive">+1,326%</td><td class="negative">-25.0%</td><td class="positive"><strong>+1,301%</strong></td><td>0.05</td><td>D</td></tr>
+<tr><td class="left">META</td><td class="positive">+147.2%</td><td class="positive">+11.7%</td><td class="positive"><strong>+158.9%</strong></td><td>0.15</td><td>A</td></tr>
+<tr><td class="left">TSLA</td><td class="positive">+84.9%</td><td class="positive">+1.4%</td><td class="positive"><strong>+86.3%</strong></td><td>0.05</td><td>B+</td></tr>
+</table>
+
+<blockquote><strong>Bottom line:</strong> With real market data and optimized delta, CC overlays added value for <strong>4 out of 7 stocks</strong> (AAPL, MSFT, AMZN, META). For explosive growth stocks (NVDA +1,326% B&H, GOOGL +265%), even the most conservative delta (0.05) could not prevent net losses from assignment costs. <strong>CC works best on moderate-growth, moderate-volatility stocks.</strong></blockquote>
+</div>
+
+<div class="section">
+<h2>2. Methodology & Data Sources</h2>
+<h3>Strategy Definition</h3>
+<p><strong>Buy & Hold:</strong> Invest $100K per stock in Jan 2021, buy shares (full lots where possible), hold continuously through Dec 2025.</p>
+<p><strong>CC Overlay:</strong> Each month, sell 1-month OTM call options against the position. Shares are <em>always held</em> and never sold.</p>
+<p><strong>Assignment Accounting:</strong> When stock closes above strike at expiration, assignment cost = (close - strike) × tradeable shares.</p>
+
+<h3>Data Sources (Real Market Data)</h3>
+<ul>
+<li><strong>Stock prices:</strong> Yahoo Finance (split-adjusted) — used for B&H returns and expiration price checks</li>
+<li><strong>Option premiums:</strong> ThetaData API v3 — real bid/ask prices from actual market data</li>
+<li><strong>Option Greeks:</strong> ThetaData EOD Greeks — real delta, IV, and other Greeks from market data</li>
+<li><strong>Premium calculation:</strong> Mid-price = (bid + ask) / 2 — represents realistic execution price</li>
+</ul>
+
+<h3>Split Handling</h3>
+<p>Stocks with splits required special handling. Before the split date, option strikes are at pre-split prices; after the split, the share count increases proportionally:</p>
+<ul>
+<li><strong>GOOGL:</strong> 20:1 split (Jul 2022) — CC starts Aug 2022 (58 shares → 1,160 shares = 11 contracts)</li>
+<li><strong>AMZN:</strong> 20:1 split (Jun 2022) — CC starts Jul 2022 (31 shares → 620 shares = 6 contracts)</li>
+<li><strong>NVDA:</strong> 4:1 (Jul 2021) + 10:1 (Jun 2024) — 1 contract → 4 → 76 contracts</li>
+<li><strong>TSLA:</strong> 3:1 split (Aug 2022) — 1 contract → 4 contracts</li>
+</ul>
+<p><em>GOOGL and AMZN had ~42 months of CC data (post-split only). With $100K, you cannot buy 100 shares of a $3,000+ stock.</em></p>
+</div>
+
+<div class="section">
+<h2>3. Part I: Buy & Hold Returns</h2>
+<h3>Year-by-Year Stock Returns</h3>
+<table>
+<tr><th>Stock</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>5-Year Total</th></tr>
+<tr><td class="left">AAPL</td><td class="positive">+38.1%</td><td class="negative">-28.2%</td><td class="positive">+54.8%</td><td class="positive">+35.6%</td><td class="positive">+12.0%</td><td class="positive"><strong>+115.8%</strong></td></tr>
+<tr><td class="left">MSFT</td><td class="positive">+55.8%</td><td class="negative">-27.7%</td><td class="positive">+58.3%</td><td class="positive">+14.5%</td><td class="positive">+16.4%</td><td class="positive"><strong>+131.5%</strong></td></tr>
+<tr><td class="left">GOOGL</td><td class="positive">+67.8%</td><td class="negative">-39.1%</td><td class="positive">+56.7%</td><td class="positive">+37.5%</td><td class="positive">+65.9%</td><td class="positive"><strong>+265.4%</strong></td></tr>
+<tr><td class="left">AMZN</td><td class="positive">+4.6%</td><td class="negative">-50.7%</td><td class="positive">+77.0%</td><td class="positive">+46.3%</td><td class="positive">+4.8%</td><td class="positive"><strong>+44.9%</strong></td></tr>
+<tr><td class="left">NVDA</td><td class="positive">+124.5%</td><td class="negative">-51.4%</td><td class="positive">+246.1%</td><td class="positive">+178.9%</td><td class="positive">+34.9%</td><td class="positive"><strong>+1,326%</strong></td></tr>
+<tr><td class="left">META</td><td class="positive">+25.1%</td><td class="negative">-64.5%</td><td class="positive">+183.8%</td><td class="positive">+69.7%</td><td class="positive">+10.5%</td><td class="positive"><strong>+147.2%</strong></td></tr>
+<tr><td class="left">TSLA</td><td class="positive">+44.8%</td><td class="negative">-69.2%</td><td class="positive">+129.9%</td><td class="positive">+62.6%</td><td class="positive">+18.6%</td><td class="positive"><strong>+84.9%</strong></td></tr>
+</table>
+
+<h3>Portfolio Final Values ($100K Initial per Stock)</h3>
+<table>
+<tr><th>Stock</th><th>Init Shares</th><th>Entry (actual)</th><th>CC Months</th><th>Final Value</th><th>Return</th></tr>
+<tr><td class="left">AAPL</td><td>700</td><td>$125.86</td><td>60/60</td><td>$202,024</td><td class="positive">+115.8%</td></tr>
+<tr><td class="left">MSFT</td><td>400</td><td>$208.88</td><td>60/60</td><td>$209,895</td><td class="positive">+131.5%</td></tr>
+<tr><td class="left">GOOGL</td><td>58</td><td>$1,713.19</td><td>41/60</td><td>$363,715</td><td class="positive">+265.4%</td></tr>
+<tr><td class="left">AMZN</td><td>31</td><td>$3,186.63</td><td>42/60</td><td>$144,323</td><td class="positive">+44.9%</td></tr>
+<tr><td class="left">NVDA</td><td>191</td><td>$523.07</td><td>60/60</td><td>$1,424,954</td><td class="positive">+1,326%</td></tr>
+<tr><td class="left">META</td><td>374</td><td>$267.07</td><td>42/60</td><td>$246,988</td><td class="positive">+147.2%</td></tr>
+<tr><td class="left">TSLA</td><td>137</td><td>$729.77</td><td>60/60</td><td>$184,856</td><td class="positive">+84.9%</td></tr>
+</table>
+<p style="font-size:0.85rem;color:#78909C;"><em>All prices split-adjusted for B&H. CC months reflect actual trading months (GOOGL/AMZN start post-split).</em></p>
+</div>
+
+<div class="section">
+<h2>4. Part II: Covered Call Premium Income (Delta ≈ 0.20)</h2>
+<h3>Annual CC Premium Income (Real bid/ask mid-price)</h3>
+<table>
+<tr><th>Stock</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>5-Year Total</th><th>$/month</th></tr>
+<tr><td class="left">AAPL</td><td>$7,196</td><td>$8,491</td><td>$7,850</td><td>$9,482</td><td>$11,116</td><td><strong>$44,135</strong></td><td>$736</td></tr>
+<tr><td class="left">MSFT</td><td>$6,258</td><td>$7,764</td><td>$7,364</td><td>$8,790</td><td>$10,698</td><td><strong>$40,874</strong></td><td>$681</td></tr>
+<tr><td class="left">GOOGL</td><td>$0</td><td>$3,482</td><td>$10,378</td><td>$11,286</td><td>$18,062</td><td><strong>$43,208</strong></td><td>$1,054</td></tr>
+<tr><td class="left">AMZN</td><td>$0</td><td>$3,363</td><td>$5,652</td><td>$8,841</td><td>$11,781</td><td><strong>$29,637</strong></td><td>$706</td></tr>
+<tr><td class="left">NVDA</td><td>$11,762</td><td>$18,886</td><td>$27,786</td><td>$97,100</td><td>$127,832</td><td><strong>$283,366</strong></td><td>$4,723</td></tr>
+<tr><td class="left">META</td><td>$0</td><td>$2,620</td><td>$6,180</td><td>$11,600</td><td>$17,310</td><td><strong>$37,710</strong></td><td>$898</td></tr>
+<tr><td class="left">TSLA</td><td>$11,740</td><td>$14,860</td><td>$12,740</td><td>$13,044</td><td>$21,750</td><td><strong>$74,134</strong></td><td>$1,236</td></tr>
+</table>
+
+<h3>Annual Assignment Cost</h3>
+<table>
+<tr><th>Stock</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>5-Year Total</th><th>Times Assigned</th></tr>
+<tr><td class="left">AAPL</td><td>$5,671</td><td>$1,645</td><td>$4,354</td><td>$8,692</td><td>$14,467</td><td><strong>$34,829</strong></td><td>13/60</td></tr>
+<tr><td class="left">MSFT</td><td>$307</td><td>$0</td><td>$7,202</td><td>$11,750</td><td>$4,666</td><td><strong>$23,925</strong></td><td>10/60</td></tr>
+<tr><td class="left">GOOGL</td><td>$0</td><td>$0</td><td>$21,205</td><td>$12,040</td><td>$25,452</td><td><strong>$58,697</strong></td><td>8/41</td></tr>
+<tr><td class="left">AMZN</td><td>$0</td><td>$0</td><td>$6,708</td><td>$6,360</td><td>$3,972</td><td><strong>$17,040</strong></td><td>8/42</td></tr>
+<tr><td class="left">NVDA</td><td>$42,341</td><td>$2,844</td><td>$45,703</td><td>$173,580</td><td>$192,022</td><td><strong>$456,491</strong></td><td>16/60</td></tr>
+<tr><td class="left">META</td><td>$0</td><td>$1,882</td><td>$3,862</td><td>$13,488</td><td>$9,335</td><td><strong>$28,567</strong></td><td>9/42</td></tr>
+<tr><td class="left">TSLA</td><td>$3,897</td><td>$0</td><td>$24,116</td><td>$31,692</td><td>$43,724</td><td><strong>$103,429</strong></td><td>17/60</td></tr>
+</table>
+<blockquote><strong>Key insight (real data):</strong> Real option premiums were generally LOWER than Black-Scholes estimates, while assignment costs were HIGHER. This is because real market bid-ask spreads reduce premium income, and actual stock rallies triggered more assignments than the model predicted.</blockquote>
+</div>
+
+<div class="section">
+<h2>5. Part III: Net CC Overlay — Premium Minus Assignment Cost</h2>
+
+<h3>Net CC Overlay ($ at Delta ≈ 0.20)</h3>
+<table>
+<tr><th>Stock</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>5-Year Net</th></tr>
+<tr><td class="left">AAPL</td><td class="positive">$+1,525</td><td class="positive">$+6,846</td><td class="positive">$+3,496</td><td class="positive">$+789</td><td class="negative">$-3,351</td><td class="positive"><strong>$+9,306</strong></td></tr>
+<tr><td class="left">MSFT</td><td class="positive">$+5,951</td><td class="positive">$+7,764</td><td class="positive">$+162</td><td class="negative">$-2,960</td><td class="positive">$+6,032</td><td class="positive"><strong>$+16,949</strong></td></tr>
+<tr><td class="left">GOOGL</td><td class="positive">$+0</td><td class="positive">$+3,482</td><td class="negative">$-10,827</td><td class="negative">$-754</td><td class="negative">$-7,390</td><td class="negative"><strong>$-15,489</strong></td></tr>
+<tr><td class="left">AMZN</td><td class="positive">$+0</td><td class="positive">$+3,363</td><td class="negative">$-1,056</td><td class="positive">$+2,481</td><td class="positive">$+7,809</td><td class="positive"><strong>$+12,597</strong></td></tr>
+<tr><td class="left">NVDA</td><td class="negative">$-30,579</td><td class="positive">$+16,042</td><td class="negative">$-17,917</td><td class="negative">$-76,480</td><td class="negative">$-64,190</td><td class="negative"><strong>$-173,126</strong></td></tr>
+<tr><td class="left">META</td><td class="positive">$+0</td><td class="positive">$+739</td><td class="positive">$+2,318</td><td class="negative">$-1,889</td><td class="positive">$+7,975</td><td class="positive"><strong>$+9,143</strong></td></tr>
+<tr><td class="left">TSLA</td><td class="positive">$+7,843</td><td class="positive">$+14,860</td><td class="negative">$-11,376</td><td class="negative">$-18,648</td><td class="negative">$-21,974</td><td class="negative"><strong>$-29,295</strong></td></tr>
+</table>
+
+<h3>Combined Return: B&H + Net CC Overlay</h3>
+<table>
+<tr><th>Stock</th><th>B&H %</th><th>CC Net %</th><th>Combined %</th><th>B&H Value</th><th>Combined Value</th></tr>
+<tr><td class="left">AAPL</td><td>+115.8%</td><td class="positive">+9.3%</td><td class="positive"><strong>+125.1%</strong></td><td>$202,024</td><td>$211,330</td></tr>
+<tr><td class="left">MSFT</td><td>+131.5%</td><td class="positive">+16.9%</td><td class="positive"><strong>+148.4%</strong></td><td>$209,895</td><td>$226,844</td></tr>
+<tr><td class="left">GOOGL</td><td>+265.4%</td><td class="negative">-15.5%</td><td class="positive"><strong>+249.9%</strong></td><td>$363,715</td><td>$348,226</td></tr>
+<tr><td class="left">AMZN</td><td>+44.9%</td><td class="positive">+12.6%</td><td class="positive"><strong>+57.5%</strong></td><td>$144,323</td><td>$156,920</td></tr>
+<tr><td class="left">NVDA</td><td>+1,326%</td><td class="negative">-173.1%</td><td class="positive"><strong>+1,153%</strong></td><td>$1,424,954</td><td>$1,251,828</td></tr>
+<tr><td class="left">META</td><td>+147.2%</td><td class="positive">+9.1%</td><td class="positive"><strong>+156.3%</strong></td><td>$246,988</td><td>$256,131</td></tr>
+<tr><td class="left">TSLA</td><td>+84.9%</td><td class="negative">-29.3%</td><td class="positive"><strong>+55.6%</strong></td><td>$184,856</td><td>$155,562</td></tr>
+</table>
+
+<div class="callout-warn callout">
+<strong>Real data reality check:</strong> NVDA's CC overlay at Δ=0.20 resulted in <strong>-$173,126 (-173.1%)</strong> — the assignment costs from NVDA's explosive rallies ($456K) far exceeded the rich premiums ($283K). Similarly, GOOGL lost -$15,489 and TSLA lost -$29,295. <strong>Covered calls fundamentally cap upside, making them harmful on stocks with extreme growth.</strong>
+</div>
+</div>
+
+<div class="section">
+<h2>6. Part IV: Delta Grid Search — Optimal Strategy per Stock</h2>
+
+<h3>Net CC Overlay (% of $100K) by Delta</h3>
+<table>
+<tr><th>Stock</th><th>Δ=0.05</th><th>Δ=0.1</th><th>Δ=0.15</th><th>Δ=0.2</th><th>Δ=0.25</th><th>Δ=0.3</th><th>Δ=0.35</th><th>Δ=0.4</th><th>Δ=0.45</th><th>Δ=0.5</th><th>Best Δ</th></tr>
+<tr><td class="left">AAPL</td><td class="positive">+4.2%</td><td class="positive">+9.1%</td><td class="positive">+7.8%</td><td class="positive">+9.3%</td><td class="positive">+10.2%</td><td class="positive">+7.9%</td><td class="positive">+13.3%</td><td class="positive">+19.6%</td><td class="positive">+23.5%</td><td class="positive">+18.0%</td><td><strong>0.45</strong></td></tr>
+<tr><td class="left">MSFT</td><td class="positive">+8.2%</td><td class="positive">+10.2%</td><td class="positive">+16.8%</td><td class="positive">+16.9%</td><td class="positive">+19.4%</td><td class="positive">+25.0%</td><td class="positive">+33.6%</td><td class="positive">+38.9%</td><td class="positive">+47.3%</td><td class="positive">+57.7%</td><td><strong>0.5</strong></td></tr>
+<tr><td class="left">GOOGL</td><td class="negative">-4.4%</td><td class="negative">-12.4%</td><td class="negative">-13.3%</td><td class="negative">-15.5%</td><td class="negative">-18.8%</td><td class="negative">-26.2%</td><td class="negative">-27.3%</td><td class="negative">-24.5%</td><td class="negative">-28.8%</td><td class="negative">-31.9%</td><td><strong>0.05</strong></td></tr>
+<tr><td class="left">AMZN</td><td class="positive">+5.3%</td><td class="positive">+9.0%</td><td class="positive">+12.0%</td><td class="positive">+12.6%</td><td class="positive">+16.6%</td><td class="positive">+11.4%</td><td class="positive">+17.0%</td><td class="positive">+18.7%</td><td class="positive">+18.7%</td><td class="positive">+15.4%</td><td><strong>0.4</strong></td></tr>
+<tr><td class="left">NVDA</td><td class="negative">-25.0%</td><td class="negative">-118.1%</td><td class="negative">-144.5%</td><td class="negative">-173.1%</td><td class="negative">-234.0%</td><td class="negative">-240.2%</td><td class="negative">-329.9%</td><td class="negative">-343.6%</td><td class="negative">-366.2%</td><td class="negative">-400.8%</td><td><strong>0.05</strong></td></tr>
+<tr><td class="left">META</td><td class="positive">+7.8%</td><td class="positive">+11.1%</td><td class="positive">+11.7%</td><td class="positive">+9.1%</td><td class="positive">+11.6%</td><td class="positive">+9.2%</td><td class="positive">+9.2%</td><td class="positive">+11.0%</td><td class="positive">+10.2%</td><td class="positive">+11.3%</td><td><strong>0.15</strong></td></tr>
+<tr><td class="left">TSLA</td><td class="positive">+1.4%</td><td class="negative">-9.4%</td><td class="negative">-17.0%</td><td class="negative">-29.3%</td><td class="negative">-41.2%</td><td class="negative">-52.0%</td><td class="negative">-58.8%</td><td class="negative">-60.3%</td><td class="negative">-59.1%</td><td class="negative">-58.1%</td><td><strong>0.05</strong></td></tr>
+</table>
+
+<h3>Optimal Strategy Summary</h3>
+<table>
+<tr><th>Stock</th><th>Optimal Δ</th><th>B&H Return</th><th>Best CC Net</th><th>Combined</th><th>Total Prem</th><th>Assign Cost</th><th>Times Assigned</th></tr>
+<tr><td class="left">AAPL</td><td><strong>0.45</strong></td><td>+115.8%</td><td class="positive">+23.5%</td><td class="positive"><strong>+139.3%</strong></td><td>$137,848</td><td>$114,388</td><td>26/59</td></tr>
+<tr><td class="left">MSFT</td><td><strong>0.5</strong></td><td>+131.5%</td><td class="positive">+57.7%</td><td class="positive"><strong>+189.2%</strong></td><td>$156,348</td><td>$98,615</td><td>22/60</td></tr>
+<tr><td class="left">GOOGL</td><td><strong>0.05</strong></td><td>+265.4%</td><td class="negative">-4.4%</td><td class="positive"><strong>+261.0%</strong></td><td>$8,855</td><td>$13,262</td><td>3/41</td></tr>
+<tr><td class="left">AMZN</td><td><strong>0.4</strong></td><td>+44.9%</td><td class="positive">+18.7%</td><td class="positive"><strong>+63.6%</strong></td><td>$78,099</td><td>$59,358</td><td>20/42</td></tr>
+<tr><td class="left">NVDA</td><td><strong>0.05</strong></td><td>+1,326%</td><td class="negative">-25.0%</td><td class="positive"><strong>+1,301%</strong></td><td>$65,052</td><td>$90,098</td><td>6/60</td></tr>
+<tr><td class="left">META</td><td><strong>0.15</strong></td><td>+147.2%</td><td class="positive">+11.7%</td><td class="positive"><strong>+158.9%</strong></td><td>$26,496</td><td>$14,815</td><td>6/42</td></tr>
+<tr><td class="left">TSLA</td><td><strong>0.05</strong></td><td>+84.9%</td><td class="positive">+1.4%</td><td class="positive"><strong>+86.3%</strong></td><td>$22,355</td><td>$20,932</td><td>3/60</td></tr>
+</table>
+
+<blockquote><strong>Delta optimization insight:</strong> For stocks with extreme growth (NVDA, GOOGL), even the most conservative delta (0.05) results in negative CC overlay. This is because any OTM call, no matter how far out, eventually gets assigned during strong rallies. For moderate-growth stocks (MSFT, AMZN), higher deltas work well because premiums scale faster than assignment frequency.</blockquote>
+</div>
+
+<div class="section">
+<h2>7. Key Insights from Real Data</h2>
+
+<h3>1. CC Overlay is NOT Universal — It Depends on Growth Rate</h3>
+<p>The most important finding: CC overlays <strong>destroy value on explosive growth stocks</strong>. NVDA (+1,326% B&H) saw -$173K in net CC loss. GOOGL (+265%) lost -$15K. TSLA (+85%) lost -$29K. The mechanism is simple: when a stock doubles or triples, even a 20-delta call gets assigned, and the assignment cost (upside forfeited) dwarfs the premium collected.</p>
+
+<h3>2. CC Works Best in Bear/Sideways Markets</h3>
+<p>2022 was universally profitable for CC overlays: AAPL +$6,846, MSFT +$7,764, TSLA +$14,860. Zero assignments with elevated IV. In contrast, 2023-2024 bull markets caused heavy assignment losses for most stocks. <strong>CC is essentially a volatility-harvesting strategy that profits from sideways movement.</strong></p>
+
+<h3>3. Real Premiums vs Model Estimates</h3>
+<p>Black-Scholes model estimates previously showed all 7 stocks with positive CC net. Real market data reveals a starkly different picture:</p>
+<ul>
+<li><strong>MSFT:</strong> Model estimated ~+12% CC net → Real: <strong>+16.9%</strong> (model was too conservative!)</li>
+<li><strong>NVDA:</strong> Model estimated ~+152% CC net → Real: <strong>-173.1%</strong> (model was catastrophically wrong)</li>
+<li><strong>GOOGL:</strong> Model estimated ~+11% CC net → Real: <strong>-15.5%</strong> (model missed assignment severity)</li>
+</ul>
+<p>The discrepancy comes from: (1) real bid-ask spreads reduce premium income, (2) actual assignment timing differs from model, (3) real IV fluctuations aren't captured by fixed monthly estimates.</p>
+
+<h3>4. Practical Recommendations</h3>
+<div class="callout">
+<strong>DO sell covered calls on:</strong> MSFT (moderate growth, low IV → steady income), AMZN (recovered post-split), AAPL (stable blue chip), META (moderate growth with elevated IV periods).<br><br>
+<strong>DO NOT sell covered calls on:</strong> NVDA (too explosive), GOOGL (strong multi-year trend), TSLA (extreme volatility causes frequent assignment in up-months).<br><br>
+<strong>General rule:</strong> If you expect a stock to grow >30%/year, covered calls will likely destroy value. Use them on stocks you expect to grow 5-20%/year.
+</div>
+</div>
+
+<div class="section">
+<h2>8. Disclaimer & Data Notes</h2>
+<p><strong>Data source:</strong> All option premiums (bid, ask, mid), deltas, and implied volatilities are from <strong>ThetaData API v3 — real historical EOD market data</strong>. Stock prices from Yahoo Finance (split-adjusted).</p>
+<p><strong>Execution assumption:</strong> Premium = mid-price (average of bid and ask). In practice, you'd likely execute between mid and bid, resulting in slightly lower premiums.</p>
+<p><strong>Split handling:</strong> For stocks with splits (GOOGL, AMZN, NVDA, TSLA), CC trading only occurred when the position had ≥100 shares for at least 1 contract. Pre-split GOOGL and AMZN required >$100K for 100 shares, so CC started post-split.</p>
+<p><strong>META note:</strong> FB→META ticker change (Jun 2022) caused missing option chain data for some early months.</p>
+<p><em>Past performance does not guarantee future results. Options trading involves substantial risk.</em></p>
+</div>
+
+<div class="footer">
+  Mag 7 Covered Call Backtest — Real ThetaData Option Data<br>
+  Generated with ThetaData API v3 | All premiums from actual market bid/ask
+</div>
+
+</div>
+</body>
+</html>

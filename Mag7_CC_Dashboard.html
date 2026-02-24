@@ -1,0 +1,2877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mag 7 Covered Call Backtest — Visual Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep-blue: #1A237E;
+    --slate: #90A4AE;
+    --bg: #FAFBFC;
+    --card: #FFFFFF;
+    --shadow: 0 2px 16px rgba(26,35,126,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: #263238;
+    line-height: 1.6;
+  }
+  .hero {
+    background: linear-gradient(135deg, #1A237E 0%, #283593 50%, #3949AB 100%);
+    color: white; padding: 64px 48px 56px; text-align: center;
+  }
+  .hero h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
+  .hero p { font-size: 1.1rem; opacity: 0.85; max-width: 640px; margin: 0 auto; }
+  .hero .meta { margin-top: 20px; font-size: 0.9rem; opacity: 0.6; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .chart-section {
+    background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 40px 36px 32px; margin: 32px 0;
+  }
+  .chart-section h2 {
+    font-size: 1.15rem; font-weight: 700; color: var(--deep-blue);
+    margin-bottom: 24px; padding-bottom: 12px;
+    border-bottom: 2px solid #E8EAF6;
+  }
+  .chart-section h2 span {
+    display: inline-block; background: #E8EAF6; color: var(--deep-blue);
+    font-size: 0.8rem; font-weight: 700; padding: 3px 10px; border-radius: 12px;
+    margin-right: 10px; vertical-align: middle;
+  }
+  .vega-embed { width: 100% !important; }
+  .vega-embed .vega-actions { display: none !important; }
+  .kpi-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin: 32px 0;
+  }
+  .kpi {
+    background: var(--card); border-radius: 12px; box-shadow: var(--shadow);
+    padding: 24px 20px; text-align: center;
+  }
+  .kpi .value { font-size: 1.8rem; font-weight: 800; color: var(--deep-blue); }
+  .kpi .label { font-size: 0.82rem; color: var(--slate); margin-top: 4px; font-weight: 500; }
+  .footer {
+    text-align: center; padding: 40px; color: var(--slate); font-size: 0.85rem;
+  }
+  @media (max-width: 768px) {
+    .hero { padding: 40px 24px; }
+    .hero h1 { font-size: 1.6rem; }
+    .chart-section { padding: 24px 16px; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Magnificent 7 — Covered Call Backtest</h1>
+  <p>60-month backtest of monthly CC overlay strategies on AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA. Initial capital $100K per stock.</p>
+  <div class="meta">Jan 2021 – Dec 2025 &nbsp;|&nbsp; Delta Grid: 0.05 – 0.50 &nbsp;|&nbsp; Model: CC Overlay (always hold stock)</div>
+</div>
+
+<div class="container">
+  <div class="kpi-row">
+    <div class="kpi"><div class="value">+239%</div><div class="label">Portfolio Combined Return</div></div>
+    <div class="kpi"><div class="value">$3,892</div><div class="label">Avg Monthly CC Income</div></div>
+    <div class="kpi"><div class="value">7 / 7</div><div class="label">Stocks with Positive CC Net</div></div>
+    <div class="kpi"><div class="value">+119%</div><div class="label">Best CC Net (NVDA)</div></div>
+  </div>
+
+  <div class="chart-section">
+    <h2><span>1</span>Market Cycle Heatmap: Annual Stock Returns</h2>
+    <div id="chart1"></div>
+  </div>
+
+  <div class="chart-section">
+    <h2><span>2</span>Implied Volatility Landscape</h2>
+    <div id="chart5"></div>
+  </div>
+
+  <div class="chart-section">
+    <h2><span>3</span>B&H vs Combined Return (Grouped Bar)</h2>
+    <div id="chart3"></div>
+  </div>
+
+  <div class="chart-section">
+    <h2><span>4</span>Net CC Overlay by Year & Stock</h2>
+    <div id="chart4"></div>
+  </div>
+
+  <div class="chart-section">
+    <h2><span>5</span>Premium Collected vs Assignment Cost</h2>
+    <div id="chart6"></div>
+  </div>
+
+  <div class="chart-section">
+    <h2><span>6</span>Delta Grid Search — Optimization Heatmap</h2>
+    <div id="chart2"></div>
+  </div>
+
+  <div class="chart-section">
+    <h2><span>7</span>Optimal Delta vs Average IV</h2>
+    <div id="chart8"></div>
+  </div>
+
+  <div class="chart-section">
+    <h2><span>8</span>CC Effectiveness by Market Regime</h2>
+    <div id="chart7"></div>
+  </div>
+
+  <div class="footer">
+    <p>Mag 7 Covered Call Backtest Report — Feb 2026</p>
+    <p style="margin-top: 4px; font-size: 0.78rem;">Past performance does not guarantee future results. For educational purposes only.</p>
+  </div>
+</div>
+
+<script>
+const renderer = "canvas";
+const opts = {renderer: renderer, actions: false, padding: {top: 8, bottom: 8, left: 8, right: 8}};
+
+vegaEmbed("#chart1", {
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#1A237E",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 14,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#1A237E",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 18,
+      "fontWeight": 700,
+      "offset": 12,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 12
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-ca5aad28e3e823e8361e0cf2ec903199"
+  },
+  "datasets": {
+    "data-ca5aad28e3e823e8361e0cf2ec903199": [
+      {
+        "Return": 33.8,
+        "Stock": "AAPL",
+        "Year": "2021"
+      },
+      {
+        "Return": -26.9,
+        "Stock": "AAPL",
+        "Year": "2022"
+      },
+      {
+        "Return": 53.9,
+        "Stock": "AAPL",
+        "Year": "2023"
+      },
+      {
+        "Return": 30.3,
+        "Stock": "AAPL",
+        "Year": "2024"
+      },
+      {
+        "Return": 4.4,
+        "Stock": "AAPL",
+        "Year": "2025"
+      },
+      {
+        "Return": 51.1,
+        "Stock": "MSFT",
+        "Year": "2021"
+      },
+      {
+        "Return": -28.4,
+        "Stock": "MSFT",
+        "Year": "2022"
+      },
+      {
+        "Return": 56.9,
+        "Stock": "MSFT",
+        "Year": "2023"
+      },
+      {
+        "Return": 13.1,
+        "Stock": "MSFT",
+        "Year": "2024"
+      },
+      {
+        "Return": 15.4,
+        "Stock": "MSFT",
+        "Year": "2025"
+      },
+      {
+        "Return": 65.0,
+        "Stock": "GOOGL",
+        "Year": "2021"
+      },
+      {
+        "Return": -38.9,
+        "Stock": "GOOGL",
+        "Year": "2022"
+      },
+      {
+        "Return": 56.3,
+        "Stock": "GOOGL",
+        "Year": "2023"
+      },
+      {
+        "Return": 34.9,
+        "Stock": "GOOGL",
+        "Year": "2024"
+      },
+      {
+        "Return": 0.0,
+        "Stock": "GOOGL",
+        "Year": "2025"
+      },
+      {
+        "Return": 2.0,
+        "Stock": "AMZN",
+        "Year": "2021"
+      },
+      {
+        "Return": -49.5,
+        "Stock": "AMZN",
+        "Year": "2022"
+      },
+      {
+        "Return": 78.3,
+        "Stock": "AMZN",
+        "Year": "2023"
+      },
+      {
+        "Return": 45.0,
+        "Stock": "AMZN",
+        "Year": "2024"
+      },
+      {
+        "Return": 0.1,
+        "Stock": "AMZN",
+        "Year": "2025"
+      },
+      {
+        "Return": 126.7,
+        "Stock": "NVDA",
+        "Year": "2021"
+      },
+      {
+        "Return": -50.4,
+        "Stock": "NVDA",
+        "Year": "2022"
+      },
+      {
+        "Return": 233.9,
+        "Stock": "NVDA",
+        "Year": "2023"
+      },
+      {
+        "Return": 177.6,
+        "Stock": "NVDA",
+        "Year": "2024"
+      },
+      {
+        "Return": 0.3,
+        "Stock": "NVDA",
+        "Year": "2025"
+      },
+      {
+        "Return": 23.1,
+        "Stock": "META",
+        "Year": "2021"
+      },
+      {
+        "Return": -64.4,
+        "Stock": "META",
+        "Year": "2022"
+      },
+      {
+        "Return": 184.2,
+        "Stock": "META",
+        "Year": "2023"
+      },
+      {
+        "Return": 74.3,
+        "Stock": "META",
+        "Year": "2024"
+      },
+      {
+        "Return": 10.0,
+        "Stock": "META",
+        "Year": "2025"
+      },
+      {
+        "Return": 44.8,
+        "Stock": "TSLA",
+        "Year": "2021"
+      },
+      {
+        "Return": -69.2,
+        "Stock": "TSLA",
+        "Year": "2022"
+      },
+      {
+        "Return": 129.8,
+        "Stock": "TSLA",
+        "Year": "2023"
+      },
+      {
+        "Return": 69.5,
+        "Stock": "TSLA",
+        "Year": "2024"
+      },
+      {
+        "Return": -9.9,
+        "Stock": "TSLA",
+        "Year": "2025"
+      }
+    ]
+  },
+  "height": 320,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "Return",
+          "legend": {
+            "gradientLength": 200,
+            "labelFontSize": 11,
+            "title": "Return %",
+            "titleFontSize": 12
+          },
+          "scale": {
+            "domain": [
+              -70,
+              0,
+              70,
+              240
+            ],
+            "range": [
+              "#E53935",
+              "#FFCDD2",
+              "#C8E6C9",
+              "#43A047"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Year",
+            "type": "nominal"
+          },
+          {
+            "field": "Return",
+            "format": "+.1f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0,
+            "labelFontSize": 14,
+            "labelFontWeight": 600
+          },
+          "field": "Year",
+          "title": null,
+          "type": "ordinal"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 14,
+            "labelFontWeight": 600
+          },
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "title": null,
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "cornerRadius": 4,
+        "stroke": "#FAFBFC",
+        "strokeWidth": 2,
+        "type": "rect"
+      },
+      "title": {
+        "subtitle": "Green = up, Red = down. 2022 was uniformly brutal; 2023 the great recovery.",
+        "subtitleColor": "#90A4AE",
+        "subtitleFontSize": 12,
+        "text": "Annual Stock Returns (%): Full Market Cycle 2021\u20132025"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "condition": {
+            "test": "(datum.Return > 80) | (datum.Return < -50)",
+            "value": "white"
+          },
+          "value": "#1A237E"
+        },
+        "text": {
+          "field": "Return",
+          "format": "+.0f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Year",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 12,
+        "fontWeight": 600,
+        "type": "text"
+      }
+    }
+  ],
+  "width": 520
+}, opts);
+
+vegaEmbed("#chart5", {
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#1A237E",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 14,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#1A237E",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 18,
+      "fontWeight": 700,
+      "offset": 12,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 12
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-7b6e2a535f7f31508ed9cac632c5daeb"
+  },
+  "datasets": {
+    "data-7b6e2a535f7f31508ed9cac632c5daeb": [
+      {
+        "IV": 26.4,
+        "Stock": "AAPL",
+        "Year": "2021"
+      },
+      {
+        "IV": 29.3,
+        "Stock": "AAPL",
+        "Year": "2022"
+      },
+      {
+        "IV": 24.4,
+        "Stock": "AAPL",
+        "Year": "2023"
+      },
+      {
+        "IV": 22.3,
+        "Stock": "AAPL",
+        "Year": "2024"
+      },
+      {
+        "IV": 24.2,
+        "Stock": "AAPL",
+        "Year": "2025"
+      },
+      {
+        "IV": 22.8,
+        "Stock": "MSFT",
+        "Year": "2021"
+      },
+      {
+        "IV": 28.4,
+        "Stock": "MSFT",
+        "Year": "2022"
+      },
+      {
+        "IV": 24.6,
+        "Stock": "MSFT",
+        "Year": "2023"
+      },
+      {
+        "IV": 22.9,
+        "Stock": "MSFT",
+        "Year": "2024"
+      },
+      {
+        "IV": 25.4,
+        "Stock": "MSFT",
+        "Year": "2025"
+      },
+      {
+        "IV": 25.3,
+        "Stock": "GOOGL",
+        "Year": "2021"
+      },
+      {
+        "IV": 32.1,
+        "Stock": "GOOGL",
+        "Year": "2022"
+      },
+      {
+        "IV": 28.3,
+        "Stock": "GOOGL",
+        "Year": "2023"
+      },
+      {
+        "IV": 26.2,
+        "Stock": "GOOGL",
+        "Year": "2024"
+      },
+      {
+        "IV": 28.5,
+        "Stock": "GOOGL",
+        "Year": "2025"
+      },
+      {
+        "IV": 30.2,
+        "Stock": "AMZN",
+        "Year": "2021"
+      },
+      {
+        "IV": 35.8,
+        "Stock": "AMZN",
+        "Year": "2022"
+      },
+      {
+        "IV": 32.4,
+        "Stock": "AMZN",
+        "Year": "2023"
+      },
+      {
+        "IV": 29.4,
+        "Stock": "AMZN",
+        "Year": "2024"
+      },
+      {
+        "IV": 30.3,
+        "Stock": "AMZN",
+        "Year": "2025"
+      },
+      {
+        "IV": 41.7,
+        "Stock": "NVDA",
+        "Year": "2021"
+      },
+      {
+        "IV": 55.8,
+        "Stock": "NVDA",
+        "Year": "2022"
+      },
+      {
+        "IV": 50.2,
+        "Stock": "NVDA",
+        "Year": "2023"
+      },
+      {
+        "IV": 50.4,
+        "Stock": "NVDA",
+        "Year": "2024"
+      },
+      {
+        "IV": 50.7,
+        "Stock": "NVDA",
+        "Year": "2025"
+      },
+      {
+        "IV": 30.2,
+        "Stock": "META",
+        "Year": "2021"
+      },
+      {
+        "IV": 54.8,
+        "Stock": "META",
+        "Year": "2022"
+      },
+      {
+        "IV": 40.2,
+        "Stock": "META",
+        "Year": "2023"
+      },
+      {
+        "IV": 33.8,
+        "Stock": "META",
+        "Year": "2024"
+      },
+      {
+        "IV": 34.1,
+        "Stock": "META",
+        "Year": "2025"
+      },
+      {
+        "IV": 56.0,
+        "Stock": "TSLA",
+        "Year": "2021"
+      },
+      {
+        "IV": 59.7,
+        "Stock": "TSLA",
+        "Year": "2022"
+      },
+      {
+        "IV": 57.8,
+        "Stock": "TSLA",
+        "Year": "2023"
+      },
+      {
+        "IV": 57.5,
+        "Stock": "TSLA",
+        "Year": "2024"
+      },
+      {
+        "IV": 60.3,
+        "Stock": "TSLA",
+        "Year": "2025"
+      }
+    ]
+  },
+  "height": 320,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "IV",
+          "legend": {
+            "gradientLength": 180,
+            "title": "IV %",
+            "titleFontSize": 12
+          },
+          "scale": {
+            "domain": [
+              20,
+              35,
+              50,
+              65
+            ],
+            "range": [
+              "#E3F2FD",
+              "#42A5F5",
+              "#1565C0",
+              "#1A237E"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Year",
+            "type": "nominal"
+          },
+          {
+            "field": "IV",
+            "format": ".1f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0,
+            "labelFontSize": 13,
+            "labelFontWeight": 500
+          },
+          "field": "Year",
+          "title": null,
+          "type": "ordinal"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 14,
+            "labelFontWeight": 600
+          },
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "title": null,
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "cornerRadius": 4,
+        "stroke": "#FAFBFC",
+        "strokeWidth": 2,
+        "type": "rect"
+      },
+      "title": {
+        "subtitle": "Darker = higher IV = more premium. TSLA & NVDA consistently high; AAPL & MSFT low.",
+        "subtitleColor": "#90A4AE",
+        "subtitleFontSize": 12,
+        "text": "Implied Volatility Landscape: Who Generates the Most Premium Fuel?"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "condition": {
+            "test": "datum.IV > 45",
+            "value": "white"
+          },
+          "value": "#1A237E"
+        },
+        "text": {
+          "field": "IV",
+          "format": ".0f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Year",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 12,
+        "fontWeight": 600,
+        "type": "text"
+      }
+    }
+  ],
+  "width": 520
+}, opts);
+
+vegaEmbed("#chart3", {
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#1A237E",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 14,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#1A237E",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 18,
+      "fontWeight": 700,
+      "offset": 12,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 12
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-d913165b9a19493dd6055f5ff8954c15"
+  },
+  "datasets": {
+    "data-3c71e3eafa060f5709b0088b05be7aa3": [
+      {
+        "text": "NVDA (off-chart)\nB&H: +937%\nCombined: +1,056%\nCC Net: +119%\nOptimal \u0394: 0.18",
+        "x": 470,
+        "y": 10
+      }
+    ],
+    "data-d285a7403ed98ae579761d64a864032b": [
+      {
+        "x": 0
+      }
+    ],
+    "data-d913165b9a19493dd6055f5ff8954c15": [
+      {
+        "Optimal Delta": 0.08,
+        "Return %": 85.3,
+        "Stock": "AAPL",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.18,
+        "Return %": 104.3,
+        "Stock": "MSFT",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.1,
+        "Return %": 110.8,
+        "Stock": "GOOGL",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.35,
+        "Return %": 34.0,
+        "Stock": "AMZN",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.18,
+        "Return %": 115.9,
+        "Stock": "META",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.25,
+        "Return %": 54.4,
+        "Stock": "TSLA",
+        "Strategy": "B&H"
+      },
+      {
+        "Optimal Delta": 0.08,
+        "Return %": 97.3,
+        "Stock": "AAPL",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.18,
+        "Return %": 118.0,
+        "Stock": "MSFT",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.1,
+        "Return %": 134.3,
+        "Stock": "GOOGL",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.35,
+        "Return %": 71.7,
+        "Stock": "AMZN",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.18,
+        "Return %": 139.6,
+        "Stock": "META",
+        "Strategy": "Combined"
+      },
+      {
+        "Optimal Delta": 0.25,
+        "Return %": 58.4,
+        "Stock": "TSLA",
+        "Strategy": "Combined"
+      }
+    ]
+  },
+  "height": 350,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "Strategy",
+          "legend": {
+            "labelFontSize": 13,
+            "orient": "top-right",
+            "symbolSize": 150,
+            "title": null
+          },
+          "scale": {
+            "domain": [
+              "B&H",
+              "Combined"
+            ],
+            "range": [
+              "#90A4AE",
+              "#1A237E"
+            ]
+          },
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Strategy",
+            "type": "nominal"
+          },
+          {
+            "field": "Return %",
+            "format": "+.1f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0,
+            "labelFontSize": 14,
+            "labelFontWeight": 600
+          },
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "TSLA"
+          ],
+          "title": null,
+          "type": "nominal"
+        },
+        "xOffset": {
+          "field": "Strategy",
+          "sort": [
+            "B&H",
+            "Combined"
+          ],
+          "type": "nominal"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 12
+          },
+          "field": "Return %",
+          "title": "5-Year Return (%)",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "cornerRadiusTopLeft": 4,
+        "cornerRadiusTopRight": 4,
+        "size": 28,
+        "type": "bar"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "value": "#1A237E"
+        },
+        "text": {
+          "field": "Return %",
+          "format": "+.0f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "TSLA"
+          ],
+          "type": "nominal"
+        },
+        "xOffset": {
+          "field": "Strategy",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "Return %",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "dy": -10,
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 600,
+        "type": "text"
+      }
+    },
+    {
+      "data": {
+        "name": "data-d285a7403ed98ae579761d64a864032b"
+      },
+      "encoding": {
+        "color": {
+          "value": "#E8EAF6"
+        },
+        "opacity": {
+          "value": 0.7
+        },
+        "x": {
+          "value": 360
+        },
+        "x2": {
+          "value": 540
+        },
+        "y": {
+          "value": 10
+        },
+        "y2": {
+          "value": 110
+        }
+      },
+      "mark": {
+        "cornerRadius": 8,
+        "type": "rect"
+      }
+    },
+    {
+      "data": {
+        "name": "data-3c71e3eafa060f5709b0088b05be7aa3"
+      },
+      "encoding": {
+        "text": {
+          "field": "text",
+          "type": "nominal"
+        },
+        "x": {
+          "value": 370
+        },
+        "y": {
+          "value": 30
+        }
+      },
+      "mark": {
+        "align": "left",
+        "color": "#1A237E",
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 13,
+        "fontWeight": 600,
+        "lineBreak": "\n",
+        "type": "text"
+      }
+    }
+  ],
+  "title": {
+    "subtitle": "NVDA excluded from bars due to extreme scale (+937% B&H). See callout box.",
+    "subtitleColor": "#90A4AE",
+    "subtitleFontSize": 12,
+    "text": "5-Year Cumulative Return: Buy & Hold vs B&H + CC Overlay"
+  },
+  "width": 500
+}, opts);
+
+vegaEmbed("#chart4", {
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#1A237E",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 14,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#1A237E",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 18,
+      "fontWeight": 700,
+      "offset": 12,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 12
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-c6bb190b5ba02796032f65fe682b7a7b"
+  },
+  "datasets": {
+    "data-c6bb190b5ba02796032f65fe682b7a7b": [
+      {
+        "Net CC": -0.9,
+        "Stock": "AAPL",
+        "Year": "2021"
+      },
+      {
+        "Net CC": -1.3,
+        "Stock": "AAPL",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -9.5,
+        "Stock": "AAPL",
+        "Year": "2023"
+      },
+      {
+        "Net CC": 1.5,
+        "Stock": "AAPL",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 12.7,
+        "Stock": "AAPL",
+        "Year": "2025"
+      },
+      {
+        "Net CC": -7.1,
+        "Stock": "MSFT",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 8.9,
+        "Stock": "MSFT",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -5.4,
+        "Stock": "MSFT",
+        "Year": "2023"
+      },
+      {
+        "Net CC": 10.1,
+        "Stock": "MSFT",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 4.9,
+        "Stock": "MSFT",
+        "Year": "2025"
+      },
+      {
+        "Net CC": -7.4,
+        "Stock": "GOOGL",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 12.5,
+        "Stock": "GOOGL",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -8.3,
+        "Stock": "GOOGL",
+        "Year": "2023"
+      },
+      {
+        "Net CC": -2.3,
+        "Stock": "GOOGL",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 19.9,
+        "Stock": "GOOGL",
+        "Year": "2025"
+      },
+      {
+        "Net CC": 7.6,
+        "Stock": "AMZN",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 1.2,
+        "Stock": "AMZN",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -3.8,
+        "Stock": "AMZN",
+        "Year": "2023"
+      },
+      {
+        "Net CC": 7.6,
+        "Stock": "AMZN",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 14.5,
+        "Stock": "AMZN",
+        "Year": "2025"
+      },
+      {
+        "Net CC": -44.6,
+        "Stock": "NVDA",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 13.4,
+        "Stock": "NVDA",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -37.9,
+        "Stock": "NVDA",
+        "Year": "2023"
+      },
+      {
+        "Net CC": 37.3,
+        "Stock": "NVDA",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 135.6,
+        "Stock": "NVDA",
+        "Year": "2025"
+      },
+      {
+        "Net CC": 4.9,
+        "Stock": "META",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 10.2,
+        "Stock": "META",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -11.0,
+        "Stock": "META",
+        "Year": "2023"
+      },
+      {
+        "Net CC": 9.1,
+        "Stock": "META",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 9.7,
+        "Stock": "META",
+        "Year": "2025"
+      },
+      {
+        "Net CC": -7.1,
+        "Stock": "TSLA",
+        "Year": "2021"
+      },
+      {
+        "Net CC": 4.7,
+        "Stock": "TSLA",
+        "Year": "2022"
+      },
+      {
+        "Net CC": -12.7,
+        "Stock": "TSLA",
+        "Year": "2023"
+      },
+      {
+        "Net CC": -9.5,
+        "Stock": "TSLA",
+        "Year": "2024"
+      },
+      {
+        "Net CC": 25.1,
+        "Stock": "TSLA",
+        "Year": "2025"
+      }
+    ]
+  },
+  "encoding": {
+    "color": {
+      "field": "Net CC",
+      "legend": null,
+      "scale": {
+        "domain": [
+          -50,
+          0,
+          50,
+          140
+        ],
+        "range": [
+          "#E53935",
+          "#FFEBEE",
+          "#E8F5E9",
+          "#43A047"
+        ]
+      },
+      "type": "quantitative"
+    },
+    "column": {
+      "field": "Stock",
+      "header": {
+        "labelColor": "#1A237E",
+        "labelFontSize": 14,
+        "labelFontWeight": 700
+      },
+      "sort": [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "NVDA",
+        "META",
+        "TSLA"
+      ],
+      "title": null,
+      "type": "nominal"
+    },
+    "tooltip": [
+      {
+        "field": "Stock",
+        "type": "nominal"
+      },
+      {
+        "field": "Year",
+        "type": "nominal"
+      },
+      {
+        "field": "Net CC",
+        "format": "+.1f",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "axis": {
+        "labelAngle": 0,
+        "labelFontSize": 12,
+        "labelFontWeight": 500
+      },
+      "field": "Year",
+      "title": null,
+      "type": "ordinal"
+    },
+    "y": {
+      "axis": {
+        "labelFontSize": 11
+      },
+      "field": "Net CC",
+      "title": "Net CC Overlay (% of capital)",
+      "type": "quantitative"
+    }
+  },
+  "height": 260,
+  "mark": {
+    "cornerRadiusBottomLeft": 3,
+    "cornerRadiusBottomRight": 3,
+    "cornerRadiusTopLeft": 3,
+    "cornerRadiusTopRight": 3,
+    "type": "bar"
+  },
+  "title": {
+    "subtitle": "Bull years (2021, 2023) often negative; Bear/flat years positive. NVDA dominates 2024-2025.",
+    "subtitleColor": "#90A4AE",
+    "subtitleFontSize": 12,
+    "text": "Net CC Overlay by Year (Delta=0.20): Red = Loss, Green = Gain"
+  },
+  "width": 80
+}, opts);
+
+vegaEmbed("#chart6", {
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#1A237E",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 14,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#1A237E",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 18,
+      "fontWeight": 700,
+      "offset": 12,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 12
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-ecafd0e19dce9622471be06d92756961"
+  },
+  "datasets": {
+    "data-ecafd0e19dce9622471be06d92756961": [
+      {
+        "Amount": 19435,
+        "Amount $K": 19.435,
+        "Stock": "AAPL",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 56023,
+        "Amount $K": 56.023,
+        "Stock": "MSFT",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 32943,
+        "Amount $K": 32.943,
+        "Stock": "GOOGL",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 119516,
+        "Amount $K": 119.516,
+        "Stock": "AMZN",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 371302,
+        "Amount $K": 371.302,
+        "Stock": "NVDA",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 66552,
+        "Amount $K": 66.552,
+        "Stock": "META",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 142946,
+        "Amount $K": 142.946,
+        "Stock": "TSLA",
+        "Type": "Premium"
+      },
+      {
+        "Amount": 7392,
+        "Amount $K": 7.392,
+        "Stock": "AAPL",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 42400,
+        "Amount $K": 42.4,
+        "Stock": "MSFT",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 9471,
+        "Amount $K": 9.471,
+        "Stock": "GOOGL",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 81786,
+        "Amount $K": 81.786,
+        "Stock": "AMZN",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 252252,
+        "Amount $K": 252.252,
+        "Stock": "NVDA",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 42825,
+        "Amount $K": 42.825,
+        "Stock": "META",
+        "Type": "Assignment Cost"
+      },
+      {
+        "Amount": 138936,
+        "Amount $K": 138.936,
+        "Stock": "TSLA",
+        "Type": "Assignment Cost"
+      }
+    ]
+  },
+  "encoding": {
+    "color": {
+      "field": "Type",
+      "legend": {
+        "labelFontSize": 13,
+        "orient": "top-right",
+        "symbolSize": 150,
+        "title": null
+      },
+      "scale": {
+        "domain": [
+          "Premium",
+          "Assignment Cost"
+        ],
+        "range": [
+          "#43A047",
+          "#E53935"
+        ]
+      },
+      "type": "nominal"
+    },
+    "tooltip": [
+      {
+        "field": "Stock",
+        "type": "nominal"
+      },
+      {
+        "field": "Type",
+        "type": "nominal"
+      },
+      {
+        "field": "Amount $K",
+        "format": "$,.0f",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "axis": {
+        "labelAngle": 0,
+        "labelFontSize": 14,
+        "labelFontWeight": 600
+      },
+      "field": "Stock",
+      "sort": [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "NVDA",
+        "META",
+        "TSLA"
+      ],
+      "title": null,
+      "type": "nominal"
+    },
+    "xOffset": {
+      "field": "Type",
+      "sort": [
+        "Premium",
+        "Assignment Cost"
+      ],
+      "type": "nominal"
+    },
+    "y": {
+      "axis": {
+        "format": "$,.0f",
+        "labelFontSize": 12
+      },
+      "field": "Amount $K",
+      "title": "Amount ($K at optimal delta)",
+      "type": "quantitative"
+    }
+  },
+  "height": 360,
+  "mark": {
+    "cornerRadiusTopLeft": 4,
+    "cornerRadiusTopRight": 4,
+    "size": 24,
+    "type": "bar"
+  },
+  "title": {
+    "subtitle": "The gap = Net CC income. NVDA: massive on both sides. TSLA: nearly cancels out.",
+    "subtitleColor": "#90A4AE",
+    "subtitleFontSize": 12,
+    "text": "Premium Collected vs Assignment Cost (at Optimal Delta)"
+  },
+  "width": 560
+}, opts);
+
+vegaEmbed("#chart2", {
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#1A237E",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 14,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#1A237E",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 18,
+      "fontWeight": 700,
+      "offset": 12,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 12
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-45d15bba17afef0784e5e3bc93297a09"
+  },
+  "datasets": {
+    "data-45d15bba17afef0784e5e3bc93297a09": [
+      {
+        "CC Net %": 7.5,
+        "Delta": 0.05,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 12.0,
+        "Delta": 0.08,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 8.1,
+        "Delta": 0.1,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 7.8,
+        "Delta": 0.12,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 5.4,
+        "Delta": 0.15,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 3.4,
+        "Delta": 0.18,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 2.5,
+        "Delta": 0.2,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": -1.6,
+        "Delta": 0.25,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": -6.9,
+        "Delta": 0.3,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": -14.4,
+        "Delta": 0.35,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": -12.6,
+        "Delta": 0.4,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": -21.9,
+        "Delta": 0.45,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": -13.2,
+        "Delta": 0.5,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 4.0,
+        "Delta": 0.05,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 8.6,
+        "Delta": 0.08,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 13.4,
+        "Delta": 0.1,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 13.5,
+        "Delta": 0.12,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 12.6,
+        "Delta": 0.15,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 13.6,
+        "Delta": 0.18,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 11.4,
+        "Delta": 0.2,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 10.4,
+        "Delta": 0.25,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 2.2,
+        "Delta": 0.3,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": -2.6,
+        "Delta": 0.35,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": -1.4,
+        "Delta": 0.4,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": -4.0,
+        "Delta": 0.45,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": -4.0,
+        "Delta": 0.5,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 14.3,
+        "Delta": 0.05,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 21.9,
+        "Delta": 0.08,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 23.5,
+        "Delta": 0.1,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 20.3,
+        "Delta": 0.12,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 19.3,
+        "Delta": 0.15,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 20.4,
+        "Delta": 0.18,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 14.3,
+        "Delta": 0.2,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 17.3,
+        "Delta": 0.25,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 8.4,
+        "Delta": 0.3,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 6.2,
+        "Delta": 0.35,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -3.1,
+        "Delta": 0.4,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -8.5,
+        "Delta": 0.45,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": -5.4,
+        "Delta": 0.5,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 7.2,
+        "Delta": 0.05,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 11.3,
+        "Delta": 0.08,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 13.8,
+        "Delta": 0.1,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 17.8,
+        "Delta": 0.12,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 21.4,
+        "Delta": 0.15,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 24.5,
+        "Delta": 0.18,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 27.0,
+        "Delta": 0.2,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 32.7,
+        "Delta": 0.25,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 31.1,
+        "Delta": 0.3,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 37.7,
+        "Delta": 0.35,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 36.8,
+        "Delta": 0.4,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 31.0,
+        "Delta": 0.45,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 30.0,
+        "Delta": 0.5,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 24.8,
+        "Delta": 0.05,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 36.6,
+        "Delta": 0.08,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 67.7,
+        "Delta": 0.1,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 87.2,
+        "Delta": 0.12,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 107.3,
+        "Delta": 0.15,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 119.1,
+        "Delta": 0.18,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 103.8,
+        "Delta": 0.2,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 115.1,
+        "Delta": 0.25,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 93.9,
+        "Delta": 0.3,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 84.8,
+        "Delta": 0.35,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 85.3,
+        "Delta": 0.4,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 75.0,
+        "Delta": 0.45,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 10.5,
+        "Delta": 0.5,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 7.8,
+        "Delta": 0.05,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 16.0,
+        "Delta": 0.08,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 20.8,
+        "Delta": 0.1,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 21.7,
+        "Delta": 0.12,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 23.6,
+        "Delta": 0.15,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 23.7,
+        "Delta": 0.18,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 22.9,
+        "Delta": 0.2,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 22.6,
+        "Delta": 0.25,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 20.5,
+        "Delta": 0.3,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 18.0,
+        "Delta": 0.35,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 16.7,
+        "Delta": 0.4,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 13.1,
+        "Delta": 0.45,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 14.4,
+        "Delta": 0.5,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 0.7,
+        "Delta": 0.05,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -1.6,
+        "Delta": 0.08,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -2.3,
+        "Delta": 0.1,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -2.1,
+        "Delta": 0.12,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": 2.1,
+        "Delta": 0.15,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": 2.6,
+        "Delta": 0.18,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": 0.4,
+        "Delta": 0.2,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": 4.0,
+        "Delta": 0.25,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -3.8,
+        "Delta": 0.3,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -5.8,
+        "Delta": 0.35,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -7.7,
+        "Delta": 0.4,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -10.9,
+        "Delta": 0.45,
+        "Stock": "TSLA"
+      },
+      {
+        "CC Net %": -10.7,
+        "Delta": 0.5,
+        "Stock": "TSLA"
+      }
+    ],
+    "data-66bdb07ad46987f70aa57d359a032841": [
+      {
+        "CC Net %": 12.0,
+        "Delta": 0.08,
+        "Stock": "AAPL"
+      },
+      {
+        "CC Net %": 13.6,
+        "Delta": 0.18,
+        "Stock": "MSFT"
+      },
+      {
+        "CC Net %": 23.5,
+        "Delta": 0.1,
+        "Stock": "GOOGL"
+      },
+      {
+        "CC Net %": 37.7,
+        "Delta": 0.35,
+        "Stock": "AMZN"
+      },
+      {
+        "CC Net %": 119.1,
+        "Delta": 0.18,
+        "Stock": "NVDA"
+      },
+      {
+        "CC Net %": 23.7,
+        "Delta": 0.18,
+        "Stock": "META"
+      },
+      {
+        "CC Net %": 4.0,
+        "Delta": 0.25,
+        "Stock": "TSLA"
+      }
+    ]
+  },
+  "height": 320,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "CC Net %",
+          "legend": {
+            "gradientLength": 200,
+            "title": "Net CC %",
+            "titleFontSize": 12
+          },
+          "scale": {
+            "domain": [
+              -25,
+              0,
+              40,
+              120
+            ],
+            "range": [
+              "#E53935",
+              "#FFEBEE",
+              "#E8F5E9",
+              "#43A047"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Delta",
+            "format": ".2f",
+            "type": "quantitative"
+          },
+          {
+            "field": "CC Net %",
+            "format": "+.1f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0,
+            "labelFontSize": 12,
+            "labelFontWeight": 500
+          },
+          "field": "Delta",
+          "title": "Target Delta",
+          "type": "ordinal"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 14,
+            "labelFontWeight": 600
+          },
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "title": null,
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "cornerRadius": 3,
+        "stroke": "#FAFBFC",
+        "strokeWidth": 1.5,
+        "type": "rect"
+      },
+      "title": {
+        "subtitle": "Each cell = net premium income minus assignment costs. Star marks optimal delta per stock.",
+        "subtitleColor": "#90A4AE",
+        "subtitleFontSize": 12,
+        "text": "Delta Grid Search: Net CC Overlay (% of capital)"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "condition": {
+            "test": "(datum['CC Net %'] > 60) | (datum['CC Net %'] < -15)",
+            "value": "white"
+          },
+          "value": "#37474F"
+        },
+        "text": {
+          "field": "CC Net %",
+          "format": "+.0f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Delta",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 9,
+        "fontWeight": 500,
+        "type": "text"
+      }
+    },
+    {
+      "data": {
+        "name": "data-66bdb07ad46987f70aa57d359a032841"
+      },
+      "encoding": {
+        "color": {
+          "value": "#1A237E"
+        },
+        "x": {
+          "field": "Delta",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "Stock",
+          "sort": [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA"
+          ],
+          "type": "ordinal"
+        }
+      },
+      "mark": {
+        "fontSize": 18,
+        "fontWeight": 700,
+        "text": "\u2605",
+        "type": "text"
+      }
+    }
+  ],
+  "width": 650
+}, opts);
+
+vegaEmbed("#chart8", {
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#1A237E",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 14,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#1A237E",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 18,
+      "fontWeight": 700,
+      "offset": 12,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 12
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-4fe89b58cb77f7a31af76a5428a7b8bb"
+  },
+  "datasets": {
+    "data-4fe89b58cb77f7a31af76a5428a7b8bb": [
+      {
+        "Avg IV": 25.32,
+        "B&H": 85.3,
+        "CC Net": 12.0,
+        "Combined": 97.3,
+        "Optimal Delta": 0.08,
+        "Stock": "AAPL"
+      },
+      {
+        "Avg IV": 24.82,
+        "B&H": 104.3,
+        "CC Net": 13.6,
+        "Combined": 118.0,
+        "Optimal Delta": 0.18,
+        "Stock": "MSFT"
+      },
+      {
+        "Avg IV": 28.080000000000002,
+        "B&H": 110.8,
+        "CC Net": 23.5,
+        "Combined": 134.3,
+        "Optimal Delta": 0.1,
+        "Stock": "GOOGL"
+      },
+      {
+        "Avg IV": 31.619999999999997,
+        "B&H": 34.0,
+        "CC Net": 37.7,
+        "Combined": 71.7,
+        "Optimal Delta": 0.35,
+        "Stock": "AMZN"
+      },
+      {
+        "Avg IV": 49.760000000000005,
+        "B&H": 937.2,
+        "CC Net": 119.1,
+        "Combined": 1056.3,
+        "Optimal Delta": 0.18,
+        "Stock": "NVDA"
+      },
+      {
+        "Avg IV": 38.62,
+        "B&H": 115.9,
+        "CC Net": 23.7,
+        "Combined": 139.6,
+        "Optimal Delta": 0.18,
+        "Stock": "META"
+      },
+      {
+        "Avg IV": 58.260000000000005,
+        "B&H": 54.4,
+        "CC Net": 4.0,
+        "Combined": 58.4,
+        "Optimal Delta": 0.25,
+        "Stock": "TSLA"
+      }
+    ]
+  },
+  "height": 360,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "CC Net",
+          "legend": {
+            "gradientLength": 160,
+            "title": "CC Net %",
+            "titleFontSize": 12
+          },
+          "scale": {
+            "domain": [
+              0,
+              40,
+              120
+            ],
+            "range": [
+              "#FFCDD2",
+              "#43A047",
+              "#1B5E20"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Stock",
+            "type": "nominal"
+          },
+          {
+            "field": "Avg IV",
+            "format": ".0f",
+            "type": "quantitative"
+          },
+          {
+            "field": "Optimal Delta",
+            "format": ".2f",
+            "type": "quantitative"
+          },
+          {
+            "field": "CC Net",
+            "format": "+.1f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelFontSize": 12
+          },
+          "field": "Avg IV",
+          "scale": {
+            "domain": [
+              22,
+              62
+            ]
+          },
+          "title": "Average IV (%)",
+          "type": "quantitative"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 12
+          },
+          "field": "Optimal Delta",
+          "scale": {
+            "domain": [
+              0.04,
+              0.4
+            ]
+          },
+          "title": "Optimal Delta",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "size": 250,
+        "stroke": "white",
+        "strokeWidth": 2,
+        "type": "circle"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "value": "#1A237E"
+        },
+        "text": {
+          "field": "Stock",
+          "type": "nominal"
+        },
+        "x": {
+          "field": "Avg IV",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "Optimal Delta",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "dy": -16,
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 14,
+        "fontWeight": 700,
+        "type": "text"
+      }
+    }
+  ],
+  "title": {
+    "subtitle": "Bubble color = CC Net income. Higher IV does NOT always mean higher optimal delta.",
+    "subtitleColor": "#90A4AE",
+    "subtitleFontSize": 12,
+    "text": "Optimal Delta vs Average IV: Where Each Stock Sits"
+  },
+  "width": 520
+}, opts);
+
+vegaEmbed("#chart7", {
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "config": {
+    "axis": {
+      "domain": true,
+      "domainColor": "#CFD8DC",
+      "gridColor": "transparent",
+      "labelColor": "#546E7A",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "tickColor": "#CFD8DC",
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13,
+      "titleFontWeight": 600
+    },
+    "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+    "header": {
+      "labelColor": "#1A237E",
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 14,
+      "labelFontWeight": 700
+    },
+    "legend": {
+      "labelFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "labelFontSize": 12,
+      "titleColor": "#1A237E",
+      "titleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "titleFontSize": 13
+    },
+    "title": {
+      "anchor": "start",
+      "color": "#1A237E",
+      "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "fontSize": 18,
+      "fontWeight": 700,
+      "offset": 12,
+      "subtitleColor": "#90A4AE",
+      "subtitleFont": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+      "subtitleFontSize": 12
+    },
+    "view": {
+      "continuousHeight": 300,
+      "continuousWidth": 300,
+      "stroke": "transparent"
+    }
+  },
+  "data": {
+    "name": "data-22ac3d529bc8bdf13866d9558be18b05"
+  },
+  "datasets": {
+    "data-22ac3d529bc8bdf13866d9558be18b05": [
+      {
+        "Avg CC Net": 9.3,
+        "Positive Rate": 87.5,
+        "Regime": "Bear Year"
+      },
+      {
+        "Avg CC Net": 7.8,
+        "Positive Rate": 100.0,
+        "Regime": "Mild Bull 0-20%"
+      },
+      {
+        "Avg CC Net": 2.5,
+        "Positive Rate": 37.5,
+        "Regime": "Moderate Bull 20-50%"
+      },
+      {
+        "Avg CC Net": -6.1,
+        "Positive Rate": 28.6,
+        "Regime": "Strong Bull 50-100%"
+      },
+      {
+        "Avg CC Net": -23.4,
+        "Positive Rate": 0.0,
+        "Regime": "Extreme Bull >100%"
+      }
+    ],
+    "data-d285a7403ed98ae579761d64a864032b": [
+      {
+        "x": 0
+      }
+    ]
+  },
+  "height": 240,
+  "layer": [
+    {
+      "encoding": {
+        "color": {
+          "field": "Avg CC Net",
+          "legend": null,
+          "scale": {
+            "domain": [
+              -25,
+              0,
+              10
+            ],
+            "range": [
+              "#E53935",
+              "#FFEBEE",
+              "#43A047"
+            ]
+          },
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "Regime",
+            "type": "nominal"
+          },
+          {
+            "field": "Avg CC Net",
+            "format": "+.1f",
+            "type": "quantitative"
+          },
+          {
+            "field": "Positive Rate",
+            "format": ".0f",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelFontSize": 12
+          },
+          "field": "Avg CC Net",
+          "title": "Average CC Net Overlay (%)",
+          "type": "quantitative"
+        },
+        "y": {
+          "axis": {
+            "labelFontSize": 13,
+            "labelFontWeight": 600
+          },
+          "field": "Regime",
+          "sort": [
+            "Bear Year",
+            "Mild Bull 0-20%",
+            "Moderate Bull 20-50%",
+            "Strong Bull 50-100%",
+            "Extreme Bull >100%"
+          ],
+          "title": null,
+          "type": "nominal"
+        }
+      },
+      "mark": {
+        "cornerRadiusBottomLeft": 4,
+        "cornerRadiusBottomRight": 4,
+        "cornerRadiusTopLeft": 4,
+        "cornerRadiusTopRight": 4,
+        "height": 28,
+        "type": "bar"
+      }
+    },
+    {
+      "encoding": {
+        "color": {
+          "value": "#1A237E"
+        },
+        "text": {
+          "field": "Avg CC Net",
+          "format": "+.1f",
+          "type": "quantitative"
+        },
+        "x": {
+          "field": "Avg CC Net",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "Regime",
+          "sort": [
+            "Bear Year",
+            "Mild Bull 0-20%",
+            "Moderate Bull 20-50%",
+            "Strong Bull 50-100%",
+            "Extreme Bull >100%"
+          ],
+          "type": "nominal"
+        }
+      },
+      "mark": {
+        "align": "left",
+        "dx": 5,
+        "font": "Helvetica Neue, Helvetica, Inter, Arial, sans-serif",
+        "fontSize": 12,
+        "fontWeight": 700,
+        "type": "text"
+      }
+    },
+    {
+      "data": {
+        "name": "data-d285a7403ed98ae579761d64a864032b"
+      },
+      "encoding": {
+        "x": {
+          "field": "x",
+          "type": "quantitative"
+        }
+      },
+      "mark": {
+        "color": "#90A4AE",
+        "strokeDash": [
+          4,
+          4
+        ],
+        "strokeWidth": 1.5,
+        "type": "rule"
+      }
+    }
+  ],
+  "title": {
+    "subtitle": "CC shines in bear/flat markets, struggles in strong bull runs. Extreme bull = disaster.",
+    "subtitleColor": "#90A4AE",
+    "subtitleFontSize": 12,
+    "text": "CC Effectiveness by Market Regime (Delta=0.20)"
+  },
+  "width": 500
+}, opts);
+
+</script>
+</body>
+</html>
