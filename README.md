@@ -1,5 +1,15 @@
 # Mag7 Covered Call Research
 
+## Motivation
+
+This project starts from personal interest in the covered call strategy and a practical question:
+
+- Can covered calls generate a stable cash flow on top of long-term Mag7 holdings?
+- Is that cash flow meaningful after assignment costs, not just gross premium?
+- What parameter set (especially target delta) is most effective for each stock?
+
+In short, the research goal is to test whether "earning cash flow via CC" is truly feasible in a full market cycle, and to identify the best parameters rather than relying on a one-size-fits-all rule.
+
 Backtesting and analysis toolkit for a covered call overlay strategy on the Magnificent 7 stocks:
 
 - `AAPL`
@@ -17,16 +27,6 @@ The project focuses on monthly covered calls from 2021 to 2025, comparing:
 - Assignment cost
 - Net covered-call overlay contribution
 - Delta optimization by stock
-
-## Motivation
-
-This project starts from personal interest in the covered call strategy and a practical question:
-
-- Can covered calls generate a stable cash flow on top of long-term Mag7 holdings?
-- Is that cash flow meaningful after assignment costs, not just gross premium?
-- What parameter set (especially target delta) is most effective for each stock?
-
-In short, the research goal is to test whether "earning cash flow via CC" is truly feasible in a full market cycle, and to identify the best parameters rather than relying on a one-size-fits-all rule.
 
 ## Project Structure
 
