@@ -88,6 +88,20 @@ Yes, generating CC cash flow is feasible, but effectiveness is stock-dependent a
 - Limited incremental benefit: `TSLA` (high premium but also high assignment drag).
 - More conservative profile: `AAPL` / `MSFT` with relatively lower target delta.
 
+## Results
+
+### Executive Summary Table
+
+![Executive Summary](figures/executive_summary_table.png)
+
+### Combined Return (B&H + Net CC Overlay)
+
+![Combined Return](figures/combined_return_table.png)
+
+### Optimal Strategy Summary
+
+![Optimal Strategy Summary](figures/optimal_strategy_table.png)
+
 
 ## Quick Start
 
